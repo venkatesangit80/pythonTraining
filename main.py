@@ -1,45 +1,49 @@
-# This is a sample Python script.
+import socket
+import subprocess
+import re
 
-# Press ⌃R to execute it or replace it with your code.
-# Press Double ⇧ to search everywhere for classes, files, tool windows, actions, and settings.
+# Example list of server names
+servers = ['example.com', 'localhost']  # Replace with your server names
 
+def get_ip_from_hostname(hostname):
+    try:
+        return socket.gethostbyname(hostname)
+    except socket.error as err:
+        print(f"Could not resolve {hostname}: {err}")
+        return None
 
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press ⌘F8 to toggle the breakpoint.
+def get_netmask(ip):
+    try:
+        # Run the `ip` command to get the interface configuration
+        result = subprocess.run(['ip', 'addr', 'show'], capture_output=True, text=True)
+        
+        # Find the netmask for the given IP address using a regex
+        match = re.search(rf'{ip}/\d+', result.stdout)
+        if match:
+            return match.group()
+        else:
+            print(f"No netmask found for IP {ip}")
+            return None
+    except Exception as e:
+        print(f"Error getting netmask: {e}")
+        return None
 
+def get_subnet(ip, netmask):
+    import ipaddress
+    try:
+        network = ipaddress.IPv4Network(f"{netmask}", strict=False)
+        return network
+    except ValueError as e:
+        print(f"Error calculating subnet: {e}")
+        return None
 
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    print("Hello, World!")
-
-    name = "Alice"
-    age = 25
-    height = 5.4
-
-    # Integer
-    x = 10
-    print(type(x))  # Output: <class 'int'>
-    # Float
-    y = 10.5
-    print(type(y))  # Output: <class 'float'>
-    # String
-    name = "Alice"
-    print(type(name))  # Output: <class 'str'>
-    # Boolean
-    is_student = True
-    print(type(is_student))  # Output: <class 'bool'>
-
-
-    a = 10
-    b = 5
-    print(a + b)  # Addition
-    print(a - b)  # Subtraction
-    print(a * b)  # Multiplication
-    print(a / b)  # Division
-    print(a % b)  # Modulus
-
-    name = input("Enter your name: ")
-    print("Hello, " + name + "!")
-
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+for server in servers:
+    ip_address = get_ip_from_hostname(server)
+    if ip_address:
+        print(f"IP Address of {server}: {ip_address}")
+        netmask = get_netmask(ip_address)
+        if netmask:
+            print(f"Netmask for {ip_address}: {netmask}")
+            subnet = get_subnet(ip_address, netmask)
+            if subnet:
+                print(f"Subnet: {subnet}")
