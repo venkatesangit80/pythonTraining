@@ -91,3 +91,81 @@ print(f"Decision Scores for {server_name}: {scores}")
 
 synthetic data
 
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from datetime import datetime, timedelta
+
+# Function to generate synthetic data
+def generate_synthetic_data(start_time, end_time, sampling_rate_minutes, anomaly_rate=0.01):
+    """
+    Generate synthetic data for response time, throughput, error count, and stall count.
+    
+    Args:
+        start_time (str): Start time in "YYYY-MM-DD HH:MM" format.
+        end_time (str): End time in "YYYY-MM-DD HH:MM" format.
+        sampling_rate_minutes (int): Sampling rate in minutes (e.g., 1 or 5).
+        anomaly_rate (float): Fraction of points that will be anomalous.
+    
+    Returns:
+        pd.DataFrame: Synthetic data with timestamp and metrics.
+    """
+    # Generate timestamps
+    start = datetime.strptime(start_time, "%Y-%m-%d %H:%M")
+    end = datetime.strptime(end_time, "%Y-%m-%d %H:%M")
+    timestamps = [start + timedelta(minutes=i) for i in range(0, int((end - start).total_seconds() / 60), sampling_rate_minutes)]
+    
+    # Generate normal data
+    response_time = np.random.normal(loc=200, scale=20, size=len(timestamps))  # ms
+    throughput = np.random.normal(loc=50, scale=5, size=len(timestamps))       # req/sec
+    error_count = np.random.normal(loc=0.01, scale=0.005, size=len(timestamps))  # ratio
+    stall_count = np.random.normal(loc=2, scale=0.5, size=len(timestamps))      # stalls/sec
+    
+    # Introduce anomalies
+    num_anomalies = int(len(timestamps) * anomaly_rate)
+    anomaly_indices = np.random.choice(len(timestamps), num_anomalies, replace=False)
+    response_time[anomaly_indices] *= np.random.uniform(1.5, 3, size=num_anomalies)  # Spike
+    throughput[anomaly_indices] *= np.random.uniform(0.5, 0.8, size=num_anomalies)  # Drop
+    error_count[anomaly_indices] *= np.random.uniform(2, 5, size=num_anomalies)    # Spike
+    stall_count[anomaly_indices] *= np.random.uniform(1.5, 3, size=num_anomalies)  # Spike
+    
+    # Create DataFrame
+    data = {
+        "timestamp": timestamps,
+        "response_time": response_time,
+        "throughput": throughput,
+        "error_count": error_count,
+        "stall_count": stall_count,
+    }
+    df = pd.DataFrame(data)
+    return df
+
+# Generate synthetic data
+start_time = "2024-12-01 00:00"
+end_time = "2024-12-01 23:59"
+
+# Generate data for 1-minute and 5-minute intervals
+data_1_minute = generate_synthetic_data(start_time, end_time, sampling_rate_minutes=1)
+data_5_minutes = generate_synthetic_data(start_time, end_time, sampling_rate_minutes=5)
+
+# Save to CSV files
+data_1_minute.to_csv("synthetic_data_1_minute.csv", index=False)
+data_5_minutes.to_csv("synthetic_data_5_minutes.csv", index=False)
+
+# Display the first few rows of 1-minute data
+print(data_1_minute.head())
+
+# Plot synthetic data (response time example)
+plt.figure(figsize=(10, 6))
+plt.plot(data_1_minute["timestamp"], data_1_minute["response_time"], label="Response Time (1 min)", alpha=0.7)
+plt.scatter(
+    data_1_minute["timestamp"][data_1_minute["response_time"] > 400], 
+    data_1_minute["response_time"][data_1_minute["response_time"] > 400], 
+    color="red", label="Anomalies (Response Time)"
+)
+plt.title("Synthetic Response Time Data with Anomalies")
+plt.xlabel("Time")
+plt.ylabel("Response Time (ms)")
+plt.legend()
+plt.grid()
+plt.show()
