@@ -169,3 +169,29 @@ plt.ylabel("Response Time (ms)")
 plt.legend()
 plt.grid()
 plt.show()
+
+
+
+
+
+
+from unittest.mock import patch, MagicMock
+import your_module  # Replace with your actual module name
+
+def test_your_function():
+    with patch('your_module.DatabaseConnection') as MockConnection:
+        mock_conn = MockConnection.return_value
+        mock_cursor = mock_conn.cursor.return_value
+
+        # Configure the mock cursor's executemany method
+        mock_cursor.executemany.return_value = None
+
+        # Define your expected SQL query and parameters
+        expected_query = "INSERT INTO your_table (column1, column2) VALUES (:1, :2)"
+        expected_params = [('value1', 'value2'), ('value3', 'value4')]
+
+        # Call the function you're testing
+        your_module.your_function()
+
+        # Assert that executemany was called with the expected query and parameters
+        mock_cursor.executemany.assert_called_once_with(expected_query, expected_params)
