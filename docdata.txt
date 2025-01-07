@@ -1,25 +1,36 @@
-Below is an example of how you might fill out the Business Context and Target Audience sections in the template. Feel free to adapt the language to your specific organization or use case.
+Below is a Use Case template that you can adapt to your needs. Each section (Title, Actor, Goal, Scenario, Sequence of Steps) is included, and the example is tailored to the scenario of checking server activity.
 
-2. Background and Context
+Use Case: Checking Server Activity
+	1.	Title
+Checking Server Activity & Utilization
+	2.	Actor
+	•	Capacity Planner (or Operations Engineer, depending on who typically checks server status and utilization)
+	3.	Goal
+	•	To view which servers are active or passive and to check resource utilization (CPU, memory, etc.) for capacity planning or troubleshooting purposes.
+	4.	Scenario
+	•	The user needs a quick overview of all servers, their current status (Active/Passive), and the ability to drill down into utilization metrics for deeper analysis. This helps ensure enough capacity is allocated and highlights any potential performance bottlenecks.
+	5.	Sequence of Steps
+	1.	User Logs In
+	•	The actor logs into the Capacity Planning Platform or the relevant monitoring dashboard.
+	2.	Navigate to Server Activity Grid
+	•	The user goes to the “Server Activity” or “Server Status” page, where a grid or table displays all servers.
+	3.	View Active/Passive Badges
+	•	Each server row in the grid shows a badge indicating A for “Active” or P for “Passive.”
+	4.	Click on Server to View Utilization
+	•	The user clicks on a server row or a dedicated “View Utilization” link/button.
+	5.	System Retrieves Utilization Data
+	•	The platform queries real-time or near real-time metrics (CPU usage, memory, network, etc.).
+	6.	Display Utilization Metrics
+	•	A modal or a new page displays the current resource utilization, possibly with charts or numerical values.
+	7.	User Reviews Data
+	•	The user checks if resource usage is within acceptable thresholds.
+	•	If usage is too high or too low, the user may take actions like provisioning more resources or investigating performance issues.
+	8.	Exit or Switch to Another Server
+	•	The user closes the utilization view or selects another server from the grid to repeat the process.
 
-2.1 Business Context
+Notes & Variations
+	•	Variation 1: If the user wants historical data, they might switch to a Historical Utilization tab or view.
+	•	Variation 2: If the server is “Passive,” the user might expect minimal or zero utilization, useful for failover or backup scenarios.
+	•	Variation 3: Automatic alerts could be configured if utilization crosses certain thresholds.
 
-	The “Where Is My Workload?” functionality addresses a critical gap in visibility and decision-making for our Capacity Planning Platform. Historically, teams have struggled to locate and monitor the environments (on-prem, private cloud, or public cloud) where their workloads are deployed. This lack of insight makes it difficult to:
-		•	Accurately forecast resource needs.
-	•	Align costs across different hosting environments.
-	•	Ensure compliance with internal or external regulations (e.g., data residency rules).
-
-	By consolidating workload location data in one place, stakeholders can make more informed decisions about resource allocation and cost optimization. It also supports strategic planning, where leadership can quickly see how capacity is distributed and whether to invest further in on-prem infrastructure or scale up cloud resources.
-
-2.2 Target Audience
-
-		•	Resource Management & Capacity Planners
-Responsible for ensuring the organization has sufficient compute/network/storage resources. They need real-time insights on where workloads are running to balance capacity across environments.
-	•	Finance & Cost Analysts
-Interested in cost implications of running workloads in different environments (on-prem vs. cloud). This data helps them create accurate forecasts, budget for new initiatives, and identify cost-saving opportunities.
-	•	Engineering & Operations Teams
-Need to know where their applications or services are deployed for troubleshooting, performance optimization, and upgrades. They also collaborate with resource managers to ensure high availability.
-	•	IT Leadership & Executives
-Use this aggregated workload location information at a higher level to assess risk, confirm compliance, and make strategic decisions about future technology investments.
-
-Feel free to modify the tone, details, and emphasis to match your organization’s specific goals, challenges, and terminology. The important part is articulating why this functionality is needed (Business Context) and who will be using or benefiting from it (Target Audience).
+This use case format helps everyone involved (developers, testers, stakeholders) clearly understand why and how the feature is used, making it easier to design, implement, and test.
