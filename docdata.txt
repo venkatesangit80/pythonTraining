@@ -1,0 +1,25 @@
+Below is an example of how you might fill out the Business Context and Target Audience sections in the template. Feel free to adapt the language to your specific organization or use case.
+
+2. Background and Context
+
+2.1 Business Context
+
+	The “Where Is My Workload?” functionality addresses a critical gap in visibility and decision-making for our Capacity Planning Platform. Historically, teams have struggled to locate and monitor the environments (on-prem, private cloud, or public cloud) where their workloads are deployed. This lack of insight makes it difficult to:
+		•	Accurately forecast resource needs.
+	•	Align costs across different hosting environments.
+	•	Ensure compliance with internal or external regulations (e.g., data residency rules).
+
+	By consolidating workload location data in one place, stakeholders can make more informed decisions about resource allocation and cost optimization. It also supports strategic planning, where leadership can quickly see how capacity is distributed and whether to invest further in on-prem infrastructure or scale up cloud resources.
+
+2.2 Target Audience
+
+		•	Resource Management & Capacity Planners
+Responsible for ensuring the organization has sufficient compute/network/storage resources. They need real-time insights on where workloads are running to balance capacity across environments.
+	•	Finance & Cost Analysts
+Interested in cost implications of running workloads in different environments (on-prem vs. cloud). This data helps them create accurate forecasts, budget for new initiatives, and identify cost-saving opportunities.
+	•	Engineering & Operations Teams
+Need to know where their applications or services are deployed for troubleshooting, performance optimization, and upgrades. They also collaborate with resource managers to ensure high availability.
+	•	IT Leadership & Executives
+Use this aggregated workload location information at a higher level to assess risk, confirm compliance, and make strategic decisions about future technology investments.
+
+Feel free to modify the tone, details, and emphasis to match your organization’s specific goals, challenges, and terminology. The important part is articulating why this functionality is needed (Business Context) and who will be using or benefiting from it (Target Audience).
