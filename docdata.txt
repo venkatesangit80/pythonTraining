@@ -1,36 +1,96 @@
-Below is a Use Case template that you can adapt to your needs. Each section (Title, Actor, Goal, Scenario, Sequence of Steps) is included, and the example is tailored to the scenario of checking server activity.
+Writing to a shared location in Python with performance optimization, especially when dealing with large files, requires careful planning to ensure efficient I/O operations and minimize network latency. Here’s how you can achieve it:
 
-Use Case: Checking Server Activity
-	1.	Title
-Checking Server Activity & Utilization
-	2.	Actor
-	•	Capacity Planner (or Operations Engineer, depending on who typically checks server status and utilization)
-	3.	Goal
-	•	To view which servers are active or passive and to check resource utilization (CPU, memory, etc.) for capacity planning or troubleshooting purposes.
-	4.	Scenario
-	•	The user needs a quick overview of all servers, their current status (Active/Passive), and the ability to drill down into utilization metrics for deeper analysis. This helps ensure enough capacity is allocated and highlights any potential performance bottlenecks.
-	5.	Sequence of Steps
-	1.	User Logs In
-	•	The actor logs into the Capacity Planning Platform or the relevant monitoring dashboard.
-	2.	Navigate to Server Activity Grid
-	•	The user goes to the “Server Activity” or “Server Status” page, where a grid or table displays all servers.
-	3.	View Active/Passive Badges
-	•	Each server row in the grid shows a badge indicating A for “Active” or P for “Passive.”
-	4.	Click on Server to View Utilization
-	•	The user clicks on a server row or a dedicated “View Utilization” link/button.
-	5.	System Retrieves Utilization Data
-	•	The platform queries real-time or near real-time metrics (CPU usage, memory, network, etc.).
-	6.	Display Utilization Metrics
-	•	A modal or a new page displays the current resource utilization, possibly with charts or numerical values.
-	7.	User Reviews Data
-	•	The user checks if resource usage is within acceptable thresholds.
-	•	If usage is too high or too low, the user may take actions like provisioning more resources or investigating performance issues.
-	8.	Exit or Switch to Another Server
-	•	The user closes the utilization view or selects another server from the grid to repeat the process.
+Best Approach: Write Locally, Then Move to Shared Location
+	1.	Why This Works:
+	•	Writing locally reduces the latency caused by network file operations.
+	•	Moving a file to the shared location after it’s complete ensures fewer write interruptions.
+	2.	Steps:
+	•	Write data to a local file.
+	•	Monitor the file size.
+	•	Once the file reaches 10 MB, close it, move it to the shared location, and start writing to a new file.
 
-Notes & Variations
-	•	Variation 1: If the user wants historical data, they might switch to a Historical Utilization tab or view.
-	•	Variation 2: If the server is “Passive,” the user might expect minimal or zero utilization, useful for failover or backup scenarios.
-	•	Variation 3: Automatic alerts could be configured if utilization crosses certain thresholds.
+Optimized Python Implementation
 
-This use case format helps everyone involved (developers, testers, stakeholders) clearly understand why and how the feature is used, making it easier to design, implement, and test.
+import os
+import shutil
+
+def write_to_shared_location(data_generator, shared_location, chunk_size=1024, max_file_size=10 * 1024 * 1024):
+    """
+    Writes data to files locally and moves them to a shared location once they reach the maximum size.
+
+    Args:
+        data_generator: A generator or iterable that yields data to be written.
+        shared_location: The shared folder path where files will be moved.
+        chunk_size: Size of data chunks to write at a time (in bytes).
+        max_file_size: Maximum size of a file before creating a new one (in bytes).
+    """
+    local_folder = "temp_local_folder"
+    os.makedirs(local_folder, exist_ok=True)
+    os.makedirs(shared_location, exist_ok=True)
+
+    file_count = 1
+    current_file_path = os.path.join(local_folder, f"file_{file_count}.txt")
+    current_file_size = 0
+
+    with open(current_file_path, "wb") as current_file:
+        for data_chunk in data_generator:
+            # Write the chunk
+            current_file.write(data_chunk)
+            current_file_size += len(data_chunk)
+
+            # Check if max file size is reached
+            if current_file_size >= max_file_size:
+                current_file.close()
+
+                # Move the file to the shared location
+                shared_file_path = os.path.join(shared_location, f"file_{file_count}.txt")
+                shutil.move(current_file_path, shared_file_path)
+
+                # Start a new file
+                file_count += 1
+                current_file_path = os.path.join(local_folder, f"file_{file_count}.txt")
+                current_file = open(current_file_path, "wb")
+                current_file_size = 0
+
+        # Final file move if any data remains
+        current_file.close()
+        if os.path.exists(current_file_path) and os.path.getsize(current_file_path) > 0:
+            shared_file_path = os.path.join(shared_location, f"file_{file_count}.txt")
+            shutil.move(current_file_path, shared_file_path)
+
+    # Cleanup local folder
+    if os.path.exists(local_folder):
+        shutil.rmtree(local_folder)
+
+# Example usage with dummy data generator
+def dummy_data_generator():
+    for i in range(100000):  # Simulating 100k chunks of data
+        yield f"Line {i}\n".encode("utf-8")
+
+write_to_shared_location(dummy_data_generator(), "/path/to/shared/location")
+
+Key Features of This Implementation
+	1.	Chunk-Based Writing:
+	•	Writes data in chunks (chunk_size) to avoid memory overhead.
+	2.	File Size Monitoring:
+	•	Automatically switches to a new file once the current file reaches 10 MB.
+	3.	Efficient File Movement:
+	•	Uses shutil.move() to transfer files to the shared location after completion.
+	4.	Local Temporary Folder:
+	•	Ensures local operations are fast and reduces network load.
+
+Performance Tuning Tips
+	1.	Adjust Chunk Size:
+	•	Increase the chunk_size (e.g., 64 KB or 128 KB) for faster writes, depending on your system’s I/O capabilities.
+	2.	Buffering:
+	•	Utilize buffered writes by opening files with a larger buffer size:
+
+open(file_path, "wb", buffering=8192)
+
+
+	3.	Parallel Processing:
+	•	If you have multiple data streams, consider parallelizing file writing and moving using threads or multiprocessing.
+	4.	Avoid Frequent File Moves:
+	•	Ensure the local disk has sufficient space to accumulate files before moving them to the shared location in batches.
+
+Would you like assistance fine-tuning this code further for your specific use case?
