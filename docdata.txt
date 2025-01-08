@@ -93,4 +93,25 @@ open(file_path, "wb", buffering=8192)
 	4.	Avoid Frequent File Moves:
 	•	Ensure the local disk has sufficient space to accumulate files before moving them to the shared location in batches.
 
-Would you like assistance fine-tuning this code further for your specific use case?
+					Would you like assistance fine-tuning this 
+code further for your specific use case?
+
+
+
+
+from datetime import datetime, timedelta
+
+def get_absolute_5_min_interval():
+    """
+    Returns the current time rounded down to the nearest 5-minute interval.
+    """
+    now = datetime.now()
+    # Calculate the number of minutes to subtract to round down to the nearest 5-minute
+    rounded_minutes = now.minute - (now.minute % 5)
+    # Create a new datetime object with rounded minutes, and reset seconds and microseconds
+    absolute_time = now.replace(minute=rounded_minutes, second=0, microsecond=0)
+    return absolute_time
+
+# Example usage
+if __name__ == "__main__":
+    print("Absolute 5-minute interval:", get_absolute_5_min_interval())
