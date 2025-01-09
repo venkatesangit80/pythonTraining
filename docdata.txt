@@ -115,3 +115,21 @@ def get_absolute_5_min_interval():
 # Example usage
 if __name__ == "__main__":
     print("Absolute 5-minute interval:", get_absolute_5_min_interval())
+
+
+
+
+import os
+
+folder_path = '/path/to/your/folder'
+
+# Iterate over all files in the directory
+for filename in os.listdir(folder_path):
+    file_path = os.path.join(folder_path, filename)
+    try:
+        if os.path.isfile(file_path) or os.path.islink(file_path):
+            os.remove(file_path)  # Remove the file
+        elif os.path.isdir(file_path):
+            os.rmdir(file_path)  # Remove the empty directory
+    except Exception as e:
+        print(f'Failed to delete {file_path}. Reason: {e}')
