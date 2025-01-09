@@ -133,3 +133,26 @@ for filename in os.listdir(folder_path):
             os.rmdir(file_path)  # Remove the empty directory
     except Exception as e:
         print(f'Failed to delete {file_path}. Reason: {e}')
+
+
+from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.triggers.interval import IntervalTrigger
+import time
+
+def my_job():
+    print("Job started")
+    # Simulate job taking 2 minutes
+    time.sleep(120)
+    print("Job finished")
+
+scheduler = BackgroundScheduler()
+trigger = IntervalTrigger(minutes=5)
+scheduler.add_job(my_job, trigger)
+scheduler.start()
+
+try:
+    # Keep the script running to allow the scheduler to run
+    while True:
+        time.sleep(1)
+except (KeyboardInterrupt, SystemExit):
+    scheduler.shutdown()
