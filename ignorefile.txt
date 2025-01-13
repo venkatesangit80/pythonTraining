@@ -195,3 +195,21 @@ def test_your_function():
 
         # Assert that executemany was called with the expected query and parameters
         mock_cursor.executemany.assert_called_once_with(expected_query, expected_params)
+
+
+
+
+
+import { format } from 'date-fns';
+import { utcToZonedTime } from 'date-fns-tz';
+
+const convertToEST = (dateString) => {
+  const date = new Date(dateString); // UTC Date
+  const timeZone = 'America/New_York'; // EST time zone
+  const zonedDate = utcToZonedTime(date, timeZone); // Convert to EST
+  return format(zonedDate, 'yyyy-MM-dd hh:mm:ss aaaa'); // Format output
+};
+
+// Example usage
+const inputDate = '2025-01-13T15:30:00Z'; // UTC time
+console.log(convertToEST(inputDate)); // Output: "2025-01-13 10:30:00 AM"
