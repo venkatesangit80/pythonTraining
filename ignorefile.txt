@@ -213,3 +213,11 @@ const convertToEST = (dateString) => {
 // Example usage
 const inputDate = '2025-01-13T15:30:00Z'; // UTC time
 console.log(convertToEST(inputDate)); // Output: "2025-01-13 10:30:00 AM"
+
+
+
+Time Zone,Date and Time
+IST,January 13, 2025, 12:00 AM
+UTC,January 12, 2025, 6:30 PM
+EST,January 13, 2025, 12:00 AM
+UTC,January 13, 2025, 5:00 AM
