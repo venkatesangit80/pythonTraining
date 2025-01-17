@@ -1,158 +1,50 @@
-Writing to a shared location in Python with performance optimization, especially when dealing with large files, requires careful planning to ensure efficient I/O operations and minimize network latency. Here’s how you can achieve it:
+Here’s a professional and structured write-up based on your inputs:
 
-Best Approach: Write Locally, Then Move to Shared Location
-	1.	Why This Works:
-	•	Writing locally reduces the latency caused by network file operations.
-	•	Moving a file to the shared location after it’s complete ensures fewer write interruptions.
-	2.	Steps:
-	•	Write data to a local file.
-	•	Monitor the file size.
-	•	Once the file reaches 10 MB, close it, move it to the shared location, and start writing to a new file.
+1. Knowledge / Skills / Abilities
+	•	Programming Languages & Frameworks: Expertise in VB6, VB.Net, C#, Java, Python, R Programming.
+	•	Database Technologies: Proficient in SQL, Oracle, and advanced database management.
+	•	Software Development: Strong skills in designing and developing enterprise applications using design patterns, architectural patterns, and modern frameworks.
+	•	Performance Engineering: Specialization in performance optimization, architecture design, capacity planning, and automation implementation.
+	•	Data Analysis & Engineering: Advanced skills in data analysis, data engineering, and scientific computations.
+	•	Platform Development: Hands-on experience in creating robust, scalable platforms.
+	•	Team Leadership: Proven track record of leading technical teams, mentoring junior engineers, and ensuring the successful delivery of complex projects.
+	•	Agile & Scrum: Certified Scrum Master with expertise in managing Jira boards and agile practices.
+	•	Distributed Systems: Proficient in implementing task distribution frameworks like Celery with team and technical management.
 
-Optimized Python Implementation
+2. Accomplishments
+	•	Led the successful adoption and implementation of Celery to improve distributed task management and system reliability.
+	•	Played a pivotal role in creating performance-engineered platforms, reducing operational bottlenecks and increasing throughput.
+	•	Architected and implemented scalable solutions for capacity planning and automation, leading to cost optimization.
+	•	Delivered high-quality design and code for enterprise-level applications across diverse technologies and platforms.
+	•	Mentored and trained multiple teams, ensuring skill enhancement and alignment with organizational goals.
+	•	Consistently recognized for delivering innovative solutions to complex technical challenges within tight deadlines.
+	•	Successfully transitioned legacy systems (VB6 to VB.Net and Java), ensuring minimal disruption and improved functionality.
 
-import os
-import shutil
+3. Career Aspirations
+	•	To transition into a Principal Engineer or Technical Architect role, focusing on designing scalable, robust systems for global enterprises.
+	•	Continue to lead and mentor technical teams while driving innovation and improving operational efficiency.
+	•	Expand expertise in cloud-native platforms, distributed systems, and AI/ML-driven automation.
+	•	Contribute to organizational strategy by leveraging deep technical expertise to align architecture with business goals.
 
-def write_to_shared_location(data_generator, shared_location, chunk_size=1024, max_file_size=10 * 1024 * 1024):
-    """
-    Writes data to files locally and moves them to a shared location once they reach the maximum size.
+4. Wells Fargo Experience
+	•	Role: Lead Software Engineer.
+	•	Spearheaded the implementation of Celery for distributed task management, resulting in enhanced system reliability and scalability.
+	•	Worked on platform creation projects, integrating performance engineering and automation across critical systems.
+	•	Led cross-functional teams to deliver high-quality software solutions within agile environments.
+	•	Provided technical consulting on capacity planning and optimized resource allocation for key applications.
+	•	Ensured seamless collaboration with stakeholders, contributing to the successful delivery of enterprise projects.
 
-    Args:
-        data_generator: A generator or iterable that yields data to be written.
-        shared_location: The shared folder path where files will be moved.
-        chunk_size: Size of data chunks to write at a time (in bytes).
-        max_file_size: Maximum size of a file before creating a new one (in bytes).
-    """
-    local_folder = "temp_local_folder"
-    os.makedirs(local_folder, exist_ok=True)
-    os.makedirs(shared_location, exist_ok=True)
+5. External Experience
+	•	Development Expertise: Transitioned legacy applications (VB6 to VB.Net, Java), delivering modernized solutions for large enterprises.
+	•	Performance Optimization: Delivered end-to-end performance engineering solutions for high-traffic systems.
+	•	Leadership: Managed global technical teams as a Scrum Master, driving successful project deliveries and team productivity.
+	•	Platform Development: Designed and implemented scalable, multi-functional platforms leveraging Python, R Programming, and advanced data engineering principles.
 
-    file_count = 1
-    current_file_path = os.path.join(local_folder, f"file_{file_count}.txt")
-    current_file_size = 0
+6. Education
+	•	Bachelor of Technology (B.Tech) in Biotechnology – PES University, Bangalore.
+	•	Certifications:
+	•	Certified Scrum Master (CSM).
+	•	Azure Fundamentals (AZ-900) – Microsoft Certified.
+	•	Ongoing pursuit of AZ-204 certification for Azure development expertise.
 
-    with open(current_file_path, "wb") as current_file:
-        for data_chunk in data_generator:
-            # Write the chunk
-            current_file.write(data_chunk)
-            current_file_size += len(data_chunk)
-
-            # Check if max file size is reached
-            if current_file_size >= max_file_size:
-                current_file.close()
-
-                # Move the file to the shared location
-                shared_file_path = os.path.join(shared_location, f"file_{file_count}.txt")
-                shutil.move(current_file_path, shared_file_path)
-
-                # Start a new file
-                file_count += 1
-                current_file_path = os.path.join(local_folder, f"file_{file_count}.txt")
-                current_file = open(current_file_path, "wb")
-                current_file_size = 0
-
-        # Final file move if any data remains
-        current_file.close()
-        if os.path.exists(current_file_path) and os.path.getsize(current_file_path) > 0:
-            shared_file_path = os.path.join(shared_location, f"file_{file_count}.txt")
-            shutil.move(current_file_path, shared_file_path)
-
-    # Cleanup local folder
-    if os.path.exists(local_folder):
-        shutil.rmtree(local_folder)
-
-# Example usage with dummy data generator
-def dummy_data_generator():
-    for i in range(100000):  # Simulating 100k chunks of data
-        yield f"Line {i}\n".encode("utf-8")
-
-write_to_shared_location(dummy_data_generator(), "/path/to/shared/location")
-
-Key Features of This Implementation
-	1.	Chunk-Based Writing:
-	•	Writes data in chunks (chunk_size) to avoid memory overhead.
-	2.	File Size Monitoring:
-	•	Automatically switches to a new file once the current file reaches 10 MB.
-	3.	Efficient File Movement:
-	•	Uses shutil.move() to transfer files to the shared location after completion.
-	4.	Local Temporary Folder:
-	•	Ensures local operations are fast and reduces network load.
-
-Performance Tuning Tips
-	1.	Adjust Chunk Size:
-	•	Increase the chunk_size (e.g., 64 KB or 128 KB) for faster writes, depending on your system’s I/O capabilities.
-	2.	Buffering:
-	•	Utilize buffered writes by opening files with a larger buffer size:
-
-open(file_path, "wb", buffering=8192)
-
-
-	3.	Parallel Processing:
-	•	If you have multiple data streams, consider parallelizing file writing and moving using threads or multiprocessing.
-	4.	Avoid Frequent File Moves:
-	•	Ensure the local disk has sufficient space to accumulate files before moving them to the shared location in batches.
-
-					Would you like assistance fine-tuning this 
-code further for your specific use case?
-
-
-
-
-from datetime import datetime, timedelta
-
-def get_absolute_5_min_interval():
-    """
-    Returns the current time rounded down to the nearest 5-minute interval.
-    """
-    now = datetime.now()
-    # Calculate the number of minutes to subtract to round down to the nearest 5-minute
-    rounded_minutes = now.minute - (now.minute % 5)
-    # Create a new datetime object with rounded minutes, and reset seconds and microseconds
-    absolute_time = now.replace(minute=rounded_minutes, second=0, microsecond=0)
-    return absolute_time
-
-# Example usage
-if __name__ == "__main__":
-    print("Absolute 5-minute interval:", get_absolute_5_min_interval())
-
-
-
-
-import os
-
-folder_path = '/path/to/your/folder'
-
-# Iterate over all files in the directory
-for filename in os.listdir(folder_path):
-    file_path = os.path.join(folder_path, filename)
-    try:
-        if os.path.isfile(file_path) or os.path.islink(file_path):
-            os.remove(file_path)  # Remove the file
-        elif os.path.isdir(file_path):
-            os.rmdir(file_path)  # Remove the empty directory
-    except Exception as e:
-        print(f'Failed to delete {file_path}. Reason: {e}')
-
-
-from apscheduler.schedulers.background import BackgroundScheduler
-from apscheduler.triggers.interval import IntervalTrigger
-import time
-
-def my_job():
-    print("Job started")
-    # Simulate job taking 2 minutes
-    time.sleep(120)
-    print("Job finished")
-
-scheduler = BackgroundScheduler()
-trigger = IntervalTrigger(minutes=5)
-scheduler.add_job(my_job, trigger)
-scheduler.start()
-
-try:
-    # Keep the script running to allow the scheduler to run
-    while True:
-        time.sleep(1)
-except (KeyboardInterrupt, SystemExit):
-    scheduler.shutdown()
+This write-up presents your career and skills in a professional, concise manner suitable for review by leadership. Let me know if you’d like adjustments or additions!
