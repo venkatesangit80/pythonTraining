@@ -47,4 +47,8 @@ Here’s a professional and structured write-up based on your inputs:
 	•	Azure Fundamentals (AZ-900) – Microsoft Certified.
 	•	Ongoing pursuit of AZ-204 certification for Azure development expertise.
 
-This write-up presents your career and skills in a professional, concise manner suitable for review by leadership. Let me know if you’d like adjustments or additions!
+This write-up presents your career and skills in a professional, concise manner suitable for review by leadership. Let me know if you’d like adjustments or additions
+
+quantile_over_time(0.95, windows_cpu_utilization_percent{hostname="your-hostname", cpu_utilization_percent <= 100}[5m])
+
+!
