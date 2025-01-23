@@ -1,54 +1,18 @@
-Here’s a professional and structured write-up based on your inputs:
+import pandas as pd
 
-1. Knowledge / Skills / Abilities
-	•	Programming Languages & Frameworks: Expertise in VB6, VB.Net, C#, Java, Python, R Programming.
-	•	Database Technologies: Proficient in SQL, Oracle, and advanced database management.
-	•	Software Development: Strong skills in designing and developing enterprise applications using design patterns, architectural patterns, and modern frameworks.
-	•	Performance Engineering: Specialization in performance optimization, architecture design, capacity planning, and automation implementation.
-	•	Data Analysis & Engineering: Advanced skills in data analysis, data engineering, and scientific computations.
-	•	Platform Development: Hands-on experience in creating robust, scalable platforms.
-	•	Team Leadership: Proven track record of leading technical teams, mentoring junior engineers, and ensuring the successful delivery of complex projects.
-	•	Agile & Scrum: Certified Scrum Master with expertise in managing Jira boards and agile practices.
-	•	Distributed Systems: Proficient in implementing task distribution frameworks like Celery with team and technical management.
+# Sample DataFrame
+data = {'column': ['prod', 'dev-int', 'test-uat-env', 'stage-env-main']}
+df = pd.DataFrame(data)
 
-2. Accomplishments
-	•	Led the successful adoption and implementation of Celery to improve distributed task management and system reliability.
-	•	Played a pivotal role in creating performance-engineered platforms, reducing operational bottlenecks and increasing throughput.
-	•	Architected and implemented scalable solutions for capacity planning and automation, leading to cost optimization.
-	•	Delivered high-quality design and code for enterprise-level applications across diverse technologies and platforms.
-	•	Mentored and trained multiple teams, ensuring skill enhancement and alignment with organizational goals.
-	•	Consistently recognized for delivering innovative solutions to complex technical challenges within tight deadlines.
-	•	Successfully transitioned legacy systems (VB6 to VB.Net and Java), ensuring minimal disruption and improved functionality.
+# Function to extract the last but one value (or the only value if length is 1)
+def extract_environment(value):
+    parts = value.split('-')  # Split by '-'
+    if len(parts) == 1:       # If only one part, return it
+        return parts[0]
+    else:                     # Otherwise, return the last but one part
+        return parts[-2]
 
-3. Career Aspirations
-	•	To transition into a Principal Engineer or Technical Architect role, focusing on designing scalable, robust systems for global enterprises.
-	•	Continue to lead and mentor technical teams while driving innovation and improving operational efficiency.
-	•	Expand expertise in cloud-native platforms, distributed systems, and AI/ML-driven automation.
-	•	Contribute to organizational strategy by leveraging deep technical expertise to align architecture with business goals.
+# Apply the function to the column
+df['environment'] = df['column'].apply(extract_environment)
 
-4. Wells Fargo Experience
-	•	Role: Lead Software Engineer.
-	•	Spearheaded the implementation of Celery for distributed task management, resulting in enhanced system reliability and scalability.
-	•	Worked on platform creation projects, integrating performance engineering and automation across critical systems.
-	•	Led cross-functional teams to deliver high-quality software solutions within agile environments.
-	•	Provided technical consulting on capacity planning and optimized resource allocation for key applications.
-	•	Ensured seamless collaboration with stakeholders, contributing to the successful delivery of enterprise projects.
-
-5. External Experience
-	•	Development Expertise: Transitioned legacy applications (VB6 to VB.Net, Java), delivering modernized solutions for large enterprises.
-	•	Performance Optimization: Delivered end-to-end performance engineering solutions for high-traffic systems.
-	•	Leadership: Managed global technical teams as a Scrum Master, driving successful project deliveries and team productivity.
-	•	Platform Development: Designed and implemented scalable, multi-functional platforms leveraging Python, R Programming, and advanced data engineering principles.
-
-6. Education
-	•	Bachelor of Technology (B.Tech) in Biotechnology – PES University, Bangalore.
-	•	Certifications:
-	•	Certified Scrum Master (CSM).
-	•	Azure Fundamentals (AZ-900) – Microsoft Certified.
-	•	Ongoing pursuit of AZ-204 certification for Azure development expertise.
-
-This write-up presents your career and skills in a professional, concise manner suitable for review by leadership. Let me know if you’d like adjustments or additions
-
-quantile_over_time(0.95, windows_cpu_utilization_percent{hostname="your-hostname", cpu_utilization_percent <= 100}[5m])
-
-!
+print(df)
