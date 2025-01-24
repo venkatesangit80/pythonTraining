@@ -1,18 +1,22 @@
 import pandas as pd
+import math
 
 # Sample DataFrame
-data = {'column': ['prod', 'dev-int', 'test-uat-env', 'stage-env-main']}
+data = {'numbers': [1024, 256, None, 'abc', 512]}
 df = pd.DataFrame(data)
 
-# Function to extract the last but one value (or the only value if length is 1)
-def extract_environment(value):
-    parts = value.split('-')  # Split by '-'
-    if len(parts) == 1:       # If only one part, return it
-        return parts[0]
-    else:                     # Otherwise, return the last but one part
-        return parts[-2]
+# Function to safely apply math.pow
+def safe_pow(value, exponent):
+    try:
+        # Check if value is a number
+        if pd.notnull(value) and isinstance(value, (int, float)):
+            return math.pow(value, exponent)
+        else:
+            return None  # Return None for non-numeric or null values
+    except Exception:
+        return None  # Handle any unexpected errors
 
 # Apply the function to the column
-df['environment'] = df['column'].apply(extract_environment)
+df['result'] = df['numbers'].apply(lambda x: safe_pow(x, 3))
 
 print(df)
