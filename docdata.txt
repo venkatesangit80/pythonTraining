@@ -19,3 +19,8 @@ FROM your_table;
 SELECT your_column,
        REGEXP_REPLACE(your_column, '(-[^-]*[[:alpha:]][^-]*[[:digit:]][^-]*){1,2}$', '') AS modified_column
 FROM your_table;
+
+
+SELECT your_column,
+       REGEXP_REPLACE(your_column, '(-[^-]*[[:alnum:]][[:alpha:]][[:alnum:]]*){1,2}$', '') AS modified_column
+FROM your_table;
