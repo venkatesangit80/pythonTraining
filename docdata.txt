@@ -9,3 +9,8 @@ FROM your_table;
 SELECT original_string,
        REGEXP_SUBSTR(original_string, '^(.*?)(-[^-]*){1,2}$', 1, 1, NULL, 1) AS modified_string
 FROM your_table;
+
+
+SELECT your_column,
+       REGEXP_REPLACE(your_column, '(-[[:alnum:]]*[[:alpha:]][[:alnum:]]*){1,2}$', '') AS modified_column
+FROM your_table;
