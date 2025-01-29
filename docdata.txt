@@ -33,3 +33,35 @@ df['has_alphabet'] = df['column'].apply(lambda x: any(char.isalpha() for char in
 
 # Display the modified DataFrame
 tools.display_dataframe_to_user(name="DataFrame with Number and Alphabet Checks", dataframe=df)
+
+
+
+
+import pandas as pd
+import re
+
+# Sample DataFrame
+data = {'column': ['cmor-sp-job-7ab17x8o-bbblp', 'dns-default-72pd6', 'test-job-123ab-xyz12', 'sample-34gh56-task', 'alpha-beta-gamma']}
+df = pd.DataFrame(data)
+
+# Function to check if a string is alphanumeric
+def is_alphanumeric(s):
+    return bool(re.search('[A-Za-z]', s)) and bool(re.search('[0-9]', s))
+
+# Function to process each string
+def process_string(s):
+    segments = s.split('-')
+    if len(segments) > 1:
+        if is_alphanumeric(segments[-1]):
+            # Remove the last segment if it is alphanumeric
+            segments = segments[:-1]
+        elif len(segments) > 2 and (is_alphanumeric(segments[-2]) or segments[-2].isdigit()):
+            # Remove the last two segments if the second-to-last is alphanumeric or numeric
+            segments = segments[:-2]
+    return '-'.join(segments)
+
+# Apply the function to the DataFrame column
+df['processed_column'] = df['column'].apply(process_string)
+
+# Display the modified DataFrame
+print(df)
