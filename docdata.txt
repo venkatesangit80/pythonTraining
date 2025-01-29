@@ -1,38 +1,11 @@
-Here are the release notes for the three views:
+SELECT original_string,
+       CASE
+           WHEN INSTR(original_string, '-', -1) = 0 THEN original_string
+           WHEN INSTR(original_string, '-', -1, 2) = 0 THEN SUBSTR(original_string, 1, INSTR(original_string, '-', -1) - 1)
+           ELSE SUBSTR(original_string, 1, INSTR(original_string, '-', -1, 2) - 1)
+       END AS modified_string
+FROM your_table;
 
-Release Notes
-
-Feature 1: Datacenter Overview Dashboard
-
-Description:
-This dashboard provides a high-level overview of resource utilization across multiple datacenters categorized into production and non-production environments. It displays critical metrics for clusters, nodes, pods, and containers with detailed resource utilization percentages for CPU and memory.
-
-Key Highlights:
-	•	Overview of clusters, nodes, pods, and containers for all environments.
-	•	Visual representation of CPU and Memory Utilization to quickly assess resource health.
-	•	Displays memory metrics (used, limits, and requests) for granular insights into resource allocation.
-	•	Easy toggle between production and non-production views for targeted monitoring.
-
-Feature 2: OCP Capacity View
-
-Description:
-This feature introduces an OCP Capacity View that consolidates resource usage across all datacenters in a single, unified view. It allows for environment-specific (e.g., production or non-production) filtering and provides summary metrics for namespaces, containers, and applications.
-
-Key Highlights:
-	•	Filters for datacenters, environments, and clusters for precise monitoring.
-	•	Aggregate metrics, including the total number of clusters, nodes, pods, namespaces, containers, and applications.
-	•	Dynamic color-coded utilization indicators for visual clarity on resource usage levels (e.g., free, 40%, 60% utilization).
-	•	Centralized view to identify overall capacity and optimize resource distribution.
-
-Feature 3: Cluster-Specific Resource Utilization
-
-Description:
-This feature provides a detailed breakdown of resource utilization at the cluster level, enabling deeper insights into specific cluster performance. Each cluster’s CPU and memory utilization are displayed alongside memory usage details.
-
-Key Highlights:
-	•	View of nodes, pods, and containers per cluster for a detailed understanding.
-	•	CPU and memory utilization percentages for individual clusters with clear indicators of overutilization or underutilization.
-	•	Detailed metrics for memory (used, limits, and requests) for informed decision-making.
-	•	Helps isolate performance bottlenecks and optimize individual cluster configurations.
-
-These features aim to enhance observability and provide actionable insights for improved resource management across datacenters and clusters.
+SELECT original_string,
+       REGEXP_SUBSTR(original_string, '^(.*?)(-[^-]*){1,2}$', 1, 1, NULL, 1) AS modified_string
+FROM your_table;
