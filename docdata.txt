@@ -24,3 +24,12 @@ FROM your_table;
 SELECT your_column,
        REGEXP_REPLACE(your_column, '(-[^-]*[[:alnum:]][[:alpha:]][[:alnum:]]*){1,2}$', '') AS modified_column
 FROM your_table;
+
+
+
+# Apply functions to check if a string contains numbers or alphabets
+df['has_number'] = df['column'].apply(lambda x: any(char.isdigit() for char in x))
+df['has_alphabet'] = df['column'].apply(lambda x: any(char.isalpha() for char in x))
+
+# Display the modified DataFrame
+tools.display_dataframe_to_user(name="DataFrame with Number and Alphabet Checks", dataframe=df)
