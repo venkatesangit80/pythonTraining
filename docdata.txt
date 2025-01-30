@@ -1,67 +1,39 @@
-SELECT original_string,
-       CASE
-           WHEN INSTR(original_string, '-', -1) = 0 THEN original_string
-           WHEN INSTR(original_string, '-', -1, 2) = 0 THEN SUBSTR(original_string, 1, INSTR(original_string, '-', -1) - 1)
-           ELSE SUBSTR(original_string, 1, INSTR(original_string, '-', -1, 2) - 1)
-       END AS modified_string
-FROM your_table;
+from smbprotocol.connection import Connection
+from smbprotocol.session import Session
+from smbprotocol.tree import TreeConnect
+from smbprotocol.open import CreateDisposition, Directory, Open
 
-SELECT original_string,
-       REGEXP_SUBSTR(original_string, '^(.*?)(-[^-]*){1,2}$', 1, 1, NULL, 1) AS modified_string
-FROM your_table;
+# SMB Connection Details
+server = "smb-server-ip-or-hostname"
+share = "share-name"
+username = "your-username"
+password = "your-password"
 
+# The path where you want to create a new directory
+directory_path = "\\new-folder"
 
-SELECT your_column,
-       REGEXP_REPLACE(your_column, '(-[[:alnum:]]*[[:alpha:]][[:alnum:]]*){1,2}$', '') AS modified_column
-FROM your_table;
+# Establish the SMB connection
+conn = Connection(uuid="client-uuid", server=server, port=445)
+conn.connect()
 
+# Authenticate session
+session = Session(conn, username, password)
+session.connect()
 
-SELECT your_column,
-       REGEXP_REPLACE(your_column, '(-[^-]*[[:alpha:]][^-]*[[:digit:]][^-]*){1,2}$', '') AS modified_column
-FROM your_table;
+# Connect to the shared folder
+tree = TreeConnect(session, f"\\\\{server}\\{share}")
+tree.connect()
 
+# Open/Create the directory
+directory = Open(tree, directory_path, Directory)
+directory.create(disposition=CreateDisposition.FILE_CREATE)
 
-SELECT your_column,
-       REGEXP_REPLACE(your_column, '(-[^-]*[[:alnum:]][[:alpha:]][[:alnum:]]*){1,2}$', '') AS modified_column
-FROM your_table;
+# Close the directory handle
+directory.close()
 
+# Disconnect from SMB
+tree.disconnect()
+session.disconnect()
+conn.disconnect()
 
-
-# Apply functions to check if a string contains numbers or alphabets
-df['has_number'] = df['column'].apply(lambda x: any(char.isdigit() for char in x))
-df['has_alphabet'] = df['column'].apply(lambda x: any(char.isalpha() for char in x))
-
-# Display the modified DataFrame
-tools.display_dataframe_to_user(name="DataFrame with Number and Alphabet Checks", dataframe=df)
-
-
-
-
-import pandas as pd
-import re
-
-# Sample DataFrame
-data = {'column': ['cmor-sp-job-7ab17x8o-bbblp', 'dns-default-72pd6', 'test-job-123ab-xyz12', 'sample-34gh56-task', 'alpha-beta-gamma']}
-df = pd.DataFrame(data)
-
-# Function to check if a string is alphanumeric
-def is_alphanumeric(s):
-    return bool(re.search('[A-Za-z]', s)) and bool(re.search('[0-9]', s))
-
-# Function to process each string
-def process_string(s):
-    segments = s.split('-')
-    if len(segments) > 1:
-        if is_alphanumeric(segments[-1]):
-            # Remove the last segment if it is alphanumeric
-            segments = segments[:-1]
-        elif len(segments) > 2 and (is_alphanumeric(segments[-2]) or segments[-2].isdigit()):
-            # Remove the last two segments if the second-to-last is alphanumeric or numeric
-            segments = segments[:-2]
-    return '-'.join(segments)
-
-# Apply the function to the DataFrame column
-df['processed_column'] = df['column'].apply(process_string)
-
-# Display the modified DataFrame
-print(df)
+print(f"Directory '{directory_path}' created successfully on {server}/{share}")
