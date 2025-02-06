@@ -1,39 +1,14 @@
-from smbprotocol.connection import Connection
-from smbprotocol.session import Session
-from smbprotocol.tree import TreeConnect
-from smbprotocol.open import CreateDisposition, Directory, Open
+Dear [Recipient’s Name],
 
-# SMB Connection Details
-server = "smb-server-ip-or-hostname"
-share = "share-name"
-username = "your-username"
-password = "your-password"
+I hope you are doing well.
 
-# The path where you want to create a new directory
-directory_path = "\\new-folder"
+As part of our Application Usage Based Capacity Planning analysis implementation, we require access to our service account for the following platforms:
+	1.	Elastic – To access query data
+	2.	AppDynamics – To retrieve relevant API data
 
-# Establish the SMB connection
-conn = Connection(uuid="client-uuid", server=server, port=445)
-conn.connect()
+This access is essential to ensure a seamless and efficient analysis process. Please let us know the required steps or any approvals needed to facilitate this request.
 
-# Authenticate session
-session = Session(conn, username, password)
-session.connect()
+Looking forward to your confirmation. Let me know if you need any further details.
 
-# Connect to the shared folder
-tree = TreeConnect(session, f"\\\\{server}\\{share}")
-tree.connect()
-
-# Open/Create the directory
-directory = Open(tree, directory_path, Directory)
-directory.create(disposition=CreateDisposition.FILE_CREATE)
-
-# Close the directory handle
-directory.close()
-
-# Disconnect from SMB
-tree.disconnect()
-session.disconnect()
-conn.disconnect()
-
-print(f"Directory '{directory_path}' created successfully on {server}/{share}")
+Best regards,
+[Your Name]
