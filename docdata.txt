@@ -12,3 +12,34 @@ Looking forward to your confirmation. Let me know if you need any further detail
 
 Best regards,
 [Your Name]
+
+import pandas as pd
+import re
+
+# Sample DataFrame
+data = {
+    "ID": [1, 2, 3, 4, 5, 6],
+    "Values": ["apple-123", "hello-abc123", "data-xyz789", "python-456", "world-test42", "code-789"]
+}
+
+df = pd.DataFrame(data)
+
+# Function to remove the last part if it's alphanumeric
+def clean_last_part(s):
+    parts = str(s).split('-')  # Split by '-'
+    
+    if len(parts) > 1:  # Ensure there's a last part to check
+        last_part = parts[-1]
+        
+        # Check if last part is alphanumeric (contains both letters and numbers)
+        if bool(re.search(r'[A-Za-z]', last_part)) and bool(re.search(r'\d', last_part)):
+            return '-'.join(parts[:-1])  # Remove the last part and join the rest
+    
+    return s  # Return unchanged if last part is not alphanumeric
+
+# Apply the function to the 'Values' column
+df["Values"] = df["Values"].apply(clean_last_part)
+
+# Display the modified DataFrame
+import ace_tools as tools
+tools.display_dataframe_to_user(name="Modified DataFrame", dataframe=df)
