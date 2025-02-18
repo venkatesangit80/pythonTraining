@@ -232,3 +232,6 @@ Packet Statistics:
 100 * ((rate(node_network_receive_bytes_total[5m]) + rate(node_network_transmit_bytes_total[5m])) * 8) / <NIC_SPEED_IN_BPS>
 
 100 * ((rate(node_network_receive_bytes_total[5m]) + rate(node_network_transmit_bytes_total[5m])) * 8) / 1000000000
+
+
+100 * (rate(node_network_transmit_bytes_total[5m]) * 8) / <NIC_SPEED_IN_BPS>
