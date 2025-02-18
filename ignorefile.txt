@@ -221,3 +221,10 @@ IST,January 13, 2025, 12:00 AM
 UTC,January 12, 2025, 6:30 PM
 EST,January 13, 2025, 12:00 AM
 UTC,January 13, 2025, 5:00 AM
+
+
+
+Packet Statistics:
+	•	node_network_receive_packets_total: Total packets received.
+	•	node_network_transmit_packets_total: Total packets transmitted.
+
