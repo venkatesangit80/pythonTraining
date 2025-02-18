@@ -235,3 +235,46 @@ Packet Statistics:
 
 
 100 * (rate(node_network_transmit_bytes_total[5m]) * 8) / <NIC_SPEED_IN_BPS>
+
+
+
+
+import { useEffect, useState } from "react";
+
+const FetchDataComponent = () => {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        let response;
+        do {
+          response = await fetch("https://api.example.com/data");
+          if (response.status !== 200) {
+            console.log("Waiting for 200 response...");
+            await new Promise((resolve) => setTimeout(resolve, 2000)); // Wait 2 sec before retry
+          }
+        } while (response.status !== 200);
+
+        const result = await response.json();
+        setData(result);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  if (loading) return <p>Loading...</p>;
+  if (error) return <p>Error: {error}</p>;
+
+  return <pre>{JSON.stringify(data, null, 2)}</pre>;
+};
+
+export default FetchDataComponent;
