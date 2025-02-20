@@ -1,0 +1,65 @@
+Here’s a breakdown of the terms related to Kubernetes (K8s) and infrastructure:
+
+1. Data Centers
+
+A data center is a facility that houses computing and networking equipment. It provides power, cooling, networking, and security for hosting applications and services.
+	•	Example: AWS, Google Cloud, or on-premises servers.
+
+2. Cluster
+
+A Kubernetes cluster is a set of nodes (machines) that run containerized applications. It consists of:
+	•	Master Node (Control Plane) – Manages the cluster.
+	•	Worker Nodes – Run the applications inside Pods.
+
+3. Environment (Env)
+
+Represents the deployment stage of an application.
+	•	Common environments:
+	•	Dev (Development) – For testing by developers.
+	•	QA (Quality Assurance) – Testing before release.
+	•	Staging – Pre-production testing.
+	•	Production (Prod) – Live applications serving users.
+
+4. Namespace
+
+A namespace in Kubernetes is a logical partition within a cluster.
+	•	Used for isolating workloads between different teams or applications.
+	•	Example: dev-namespace, prod-namespace, monitoring-namespace.
+
+5. Pods
+
+A Pod is the smallest deployable unit in Kubernetes.
+	•	A pod contains one or more containers that share network and storage.
+	•	Example: A pod running a web application and a database sidecar container.
+
+6. CPU Limit
+
+Defines the maximum CPU a container can use.
+	•	If a container exceeds this limit, Kubernetes throttles it.
+	•	Example: cpu limit = 2 cores → The container can’t use more than 2 CPU cores.
+
+7. Memory (Mem) Limit
+
+Defines the maximum memory a container can consume.
+	•	If a container exceeds this, it may be killed (OOMKilled).
+	•	Example: mem limit = 4Gi → The container can’t use more than 4GB RAM.
+
+8. Requested CPU (Req CPU)
+
+The minimum CPU guaranteed for a container.
+	•	Ensures it gets enough resources.
+	•	Example: req cpu = 0.5 cores → The container gets at least 0.5 cores, but can use more if available.
+
+9. Requested Memory (Req Mem)
+
+The minimum memory guaranteed for a container.
+	•	Ensures it gets the required memory.
+	•	Example: req mem = 2Gi → The container gets at least 2GB RAM.
+
+10. Memory Working Set (Mem Working Set)
+
+Represents the actual memory usage of a container.
+	•	It’s the actively used memory that isn’t swapped out.
+	•	Helps in monitoring real-time memory consumption.
+
+Let me know if you need more details or examples!
