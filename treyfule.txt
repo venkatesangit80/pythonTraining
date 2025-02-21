@@ -1,3 +1,20 @@
+
+SELECT 
+    s.sid, 
+    s.serial#, 
+    s.username, 
+    s.osuser, 
+    o.object_name, 
+    o.object_type, 
+    l.locked_mode
+FROM 
+    v$locked_object l
+JOIN 
+    dba_objects o ON l.object_id = o.object_id
+JOIN 
+    v$session s ON l.session_id = s.sid;
+
+
 That sounds like a well-structured OCP Capacity View presentation! Here’s a suggested PowerPoint (PPTX) structure to effectively communicate the Kubernetes (K8s) components, data flow, and capacity utilization views across different levels.
 
 🏗 Suggested PowerPoint Outline
