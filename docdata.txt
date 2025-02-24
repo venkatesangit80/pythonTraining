@@ -43,3 +43,20 @@ df["Values"] = df["Values"].apply(clean_last_part)
 # Display the modified DataFrame
 import ace_tools as tools
 tools.display_dataframe_to_user(name="Modified DataFrame", dataframe=df)
+
+
+
+from unittest import TestCase
+from unittest.mock import patch
+import sys
+
+class MyTestCase(TestCase):
+    @patch.dict('sys.modules', {'celery': patch('celery.Celery').start()})
+    def test_something(self):
+        # Now import the module AFTER patching
+        import my_module  
+
+        # Now the patch should work correctly
+        with patch('my_module.some_method') as mock_method:
+            my_module.some_method()
+            mock_method.assert_called_once()
