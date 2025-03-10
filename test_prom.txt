@@ -1,0 +1,27 @@
+import requests
+
+PROMETHEUS_URL = "http://<prometheus-server>/api/v1/query_range"
+QUERY = "my_metric"
+
+start_time = 1700000000  # Example start timestamp
+end_time = 1700003600    # Example end timestamp
+step = 60  # 1-minute step
+
+params = {
+    "query": QUERY,
+    "start": start_time,
+    "end": end_time,
+    "step": step,
+}
+
+response = requests.get(PROMETHEUS_URL, params=params)
+data = response.json()
+
+# Chunking the results
+chunk_size = 100  # Define your chunk size
+results = data["data"]["result"]
+
+for i in range(0, len(results), chunk_size):
+    chunk = results[i : i + chunk_size]
+    print(f"Processing chunk {i} - {i+chunk_size}")
+    # Process each chunk
