@@ -25,3 +25,33 @@ for i in range(0, len(results), chunk_size):
     chunk = results[i : i + chunk_size]
     print(f"Processing chunk {i} - {i+chunk_size}")
     # Process each chunk
+
+
+
+# Re-import necessary libraries as the execution state was reset
+import pandas as pd
+import ace_tools as tools
+
+# Create DataFrame 1: All host names and their status
+df_all_hosts = pd.DataFrame({
+    'host_name': ['host1', 'host2', 'host3', 'host4', 'host5'],
+    'status': ['active', 'inactive', 'active', 'inactive', 'active']
+})
+
+# Create DataFrame 2: Subset of hosts
+df_subset1 = pd.DataFrame({
+    'host_name': ['host1', 'host3', 'host5']
+})
+
+# Create DataFrame 3: Another subset of hosts
+df_subset2 = pd.DataFrame({
+    'host_name': ['host2', 'host4', 'host5']
+})
+
+# Perform a left join to get the status of hosts in df_subset1 and df_subset2
+df_subset1_status = df_subset1.merge(df_all_hosts, on='host_name', how='left')
+df_subset2_status = df_subset2.merge(df_all_hosts, on='host_name', how='left')
+
+# Display the results
+tools.display_dataframe_to_user(name="Subset 1 with Status", dataframe=df_subset1_status)
+tools.display_dataframe_to_user(name="Subset 2 with Status", dataframe=df_subset2_status)
