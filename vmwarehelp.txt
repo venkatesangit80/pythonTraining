@@ -1,0 +1,55 @@
+import requests
+import json
+from datetime import datetime, timedelta
+
+# vROps API Configuration
+VROPS_HOST = "https://<VROPS-HOST>"
+AUTH_TOKEN = "<BASE64_ENCODED_CREDENTIALS>"
+
+# Define the time range (last 2 months)
+start_time = int((datetime.now() - timedelta(days=60)).timestamp()) * 1000
+end_time = int(datetime.now().timestamp()) * 1000
+
+# Define the metrics for Cluster Level
+cluster_metrics = [
+    "summary|parent datacenter",
+    "summary|total number of vms",
+    "cpu",
+    "summary|Number of physical CPUs"
+]
+
+# Define the metrics for Datastore Level
+datastore_metrics = [
+    "summary|parent datacenter",
+    "Disk Space|Total Capacity(GB)"
+]
+
+# Function to get stats from vROps
+def get_vrops_stats(resource_kind, metrics):
+    url = f"{VROPS_HOST}/suite-api/api/resources/stats/latests"
+    headers = {
+        "Authorization": f"Basic {AUTH_TOKEN}",
+        "Accept": "application/json"
+    }
+    params = {
+        "resource_query": f"resourceKind={resource_kind}",
+        "rollupType": "DAILY",
+        "startTime": start_time,
+        "endTime": end_time
+    }
+
+    for metric in metrics:
+        params[f"statKey"] = metric  # Adding multiple stat keys
+
+    response = requests.get(url, headers=headers, params=params)
+    return response.json() if response.status_code == 200 else None
+
+# Fetch Cluster-Level Metrics
+cluster_data = get_vrops_stats("ClusterComputeResource", cluster_metrics)
+
+# Fetch Datastore-Level Metrics
+datastore_data = get_vrops_stats("Datastore", datastore_metrics)
+
+# Print response
+print(json.dumps(cluster_data, indent=2))
+print(json.dumps(datastore_data, indent=2))
