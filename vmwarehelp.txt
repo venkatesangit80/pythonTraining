@@ -51,3 +51,9 @@ datastore_data = get_vrops_stats("Datastore", datastore_metrics)
 # Print response
 print(json.dumps(cluster_data, indent=2))
 print(json.dumps(datastore_data, indent=2))
+
+
+
+
+SELECT REGEXP_SUBSTR(cpu_usage, '[^|]+$', 1, 1) AS last_cpu_usage
+FROM your_table;
