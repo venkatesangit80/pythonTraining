@@ -35,11 +35,9 @@ def get_vrops_stats(resource_kind, metrics):
         "resource_query": f"resourceKind={resource_kind}",
         "rollupType": "DAILY",
         "startTime": start_time,
-        "endTime": end_time
+        "endTime": end_time,
+        "statKey": metrics  # Pass all metric keys as a list
     }
-
-    for metric in metrics:
-        params[f"statKey"] = metric  # Adding multiple stat keys
 
     response = requests.get(url, headers=headers, params=params)
     return response.json() if response.status_code == 200 else None
