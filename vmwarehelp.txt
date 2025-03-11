@@ -57,3 +57,24 @@ print(json.dumps(datastore_data, indent=2))
 
 SELECT REGEXP_SUBSTR(cpu_usage, '[^|]+$', 1, 1) AS last_cpu_usage
 FROM your_table;
+
+
+
+# Re-import necessary library
+from datetime import datetime, timedelta
+
+# Get the current time
+current_time = datetime.now()
+
+# Determine the absolute last 5-minute interval
+# Round down to the nearest 5-minute mark
+minute = (current_time.minute // 5) * 5
+interval_start = current_time.replace(minute=minute, second=0, microsecond=0)
+interval_end = interval_start + timedelta(minutes=5)
+
+# Convert to timestamps (Unix epoch format)
+start_timestamp = int(interval_start.timestamp())
+end_timestamp = int(interval_end.timestamp())
+
+# Display the timestamps
+start_timestamp, end_timestamp
