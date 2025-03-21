@@ -1,0 +1,1 @@
+I’ve updated the document to reflect your role as a Capacity Planning Team and incorporated additional use cases like forecasting, capacity insights, and workload optimization while keeping VROps to Prometheus as an example. Let me know if you need further refinements!
