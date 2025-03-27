@@ -1,57 +1,40 @@
-import requests
+Great question — the short answer is: not exactly.
 
-PROMETHEUS_URL = "http://<prometheus-server>/api/v1/query_range"
-QUERY = "my_metric"
+dagster-celery ≠ Full Celery
 
-start_time = 1700000000  # Example start timestamp
-end_time = 1700003600    # Example end timestamp
-step = 60  # 1-minute step
+dagster-celery uses Celery under the hood, but it’s tailored for Dagster’s use case: orchestrating data pipelines. So while it leverages Celery, it doesn’t expose or replace all of Celery’s features.
 
-params = {
-    "query": QUERY,
-    "start": start_time,
-    "end": end_time,
-    "step": step,
-}
+⸻
 
-response = requests.get(PROMETHEUS_URL, params=params)
-data = response.json()
+What dagster-celery can do (via Celery):
+	•	Run each op (step) of a Dagster job as a Celery task
+	•	Distribute ops across multiple workers
+	•	Handle retries, timeouts, and failures
+	•	Support concurrent execution
+	•	Use Redis/RabbitMQ as broker
+	•	Integrate with Dagster’s logging, events, and monitoring
 
-# Chunking the results
-chunk_size = 100  # Define your chunk size
-results = data["data"]["result"]
+⸻
 
-for i in range(0, len(results), chunk_size):
-    chunk = results[i : i + chunk_size]
-    print(f"Processing chunk {i} - {i+chunk_size}")
-    # Process each chunk
+What dagster-celery doesn’t do:
+	•	General-purpose task queuing outside of Dagster jobs (e.g. independent Celery tasks)
+	•	Scheduled periodic tasks like @periodic_task in Celery (Dagster handles scheduling its own way)
+	•	Full access to Celery’s advanced task patterns: chains, chords, groups, etc. (you’d use Dagster’s own graph composition instead)
+	•	Custom Celery worker logic unrelated to pipelines
 
+⸻
 
+Think of it like this:
+	•	Celery: full-featured task queue system
+	•	Dagster: data orchestrator
+	•	dagster-celery: lets Dagster use Celery as a backend to run pipeline steps in parallel/distributed fashion — but within Dagster’s orchestration model
 
-# Re-import necessary libraries as the execution state was reset
-import pandas as pd
-import ace_tools as tools
+⸻
 
-# Create DataFrame 1: All host names and their status
-df_all_hosts = pd.DataFrame({
-    'host_name': ['host1', 'host2', 'host3', 'host4', 'host5'],
-    'status': ['active', 'inactive', 'active', 'inactive', 'active']
-})
+TL;DR:
 
-# Create DataFrame 2: Subset of hosts
-df_subset1 = pd.DataFrame({
-    'host_name': ['host1', 'host3', 'host5']
-})
+If you’re already using Celery to run arbitrary business logic or scheduled tasks — keep using Celery directly.
 
-# Create DataFrame 3: Another subset of hosts
-df_subset2 = pd.DataFrame({
-    'host_name': ['host2', 'host4', 'host5']
-})
+If you’re building data pipelines or ETL jobs, and want distributed execution — dagster-celery is great, but it won’t fully replace general-purpose Celery.
 
-# Perform a left join to get the status of hosts in df_subset1 and df_subset2
-df_subset1_status = df_subset1.merge(df_all_hosts, on='host_name', how='left')
-df_subset2_status = df_subset2.merge(df_all_hosts, on='host_name', how='left')
-
-# Display the results
-tools.display_dataframe_to_user(name="Subset 1 with Status", dataframe=df_subset1_status)
-tools.display_dataframe_to_user(name="Subset 2 with Status", dataframe=df_subset2_status)
+Want help deciding between using Celery standalone or going with Dagster + dagster-celery?
