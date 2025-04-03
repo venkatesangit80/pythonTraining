@@ -1,1 +1,29 @@
-GET https://<vrops-host>/suite-api/api/adapterkinds/VMWARE/resourcekinds/VirtualMachine/statkeys
+import requests
+
+# Replace these values
+vrops_url = "https://<vrops-hostname>"
+access_token = "<your-access-token>"
+adapter_kind = "VMWARE"
+resource_kind = "VirtualMachine"
+
+# Construct API URL
+url = f"{vrops_url}/suite-api/api/adapterkinds/{adapter_kind}/resourcekinds/{resource_kind}/statkeys"
+
+# Set headers for token-based authentication
+headers = {
+    "Accept": "application/json",
+    "Authorization": f"Bearer {access_token}"
+}
+
+# Send GET request
+response = requests.get(url, headers=headers, verify=False)
+
+# Handle response
+if response.status_code == 200:
+    data = response.json()
+    stat_keys = [item['key'] for item in data.get('stat-keys', [])]
+    print("Available Metrics (Stat Keys):")
+    for key in stat_keys:
+        print(key)
+else:
+    print(f"Error: {response.status_code} - {response.text}")
