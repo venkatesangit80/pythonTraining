@@ -1,29 +1,42 @@
 import requests
+import pandas as pd
 
-# Replace these values
-vrops_url = "https://<vrops-hostname>"
-access_token = "<your-access-token>"
+# ==== CONFIG ====
+vrops_url = "https://<vrops-hostname>"  # e.g., https://vrops.company.com
+access_token = "<your-access-token>"    # Replace with your Bearer token
 adapter_kind = "VMWARE"
-resource_kind = "VirtualMachine"
+resource_kind = "VirtualMachine"        # You can change to HostSystem, etc.
 
-# Construct API URL
+# ==== API Endpoint ====
 url = f"{vrops_url}/suite-api/api/adapterkinds/{adapter_kind}/resourcekinds/{resource_kind}/statkeys"
 
-# Set headers for token-based authentication
+# ==== Headers ====
 headers = {
     "Accept": "application/json",
     "Authorization": f"Bearer {access_token}"
 }
 
-# Send GET request
+# ==== Request ====
 response = requests.get(url, headers=headers, verify=False)
 
-# Handle response
+# ==== Parse to DataFrame ====
 if response.status_code == 200:
-    data = response.json()
-    stat_keys = [item['key'] for item in data.get('stat-keys', [])]
-    print("Available Metrics (Stat Keys):")
-    for key in stat_keys:
-        print(key)
+    stat_keys = response.json().get("stat-keys", [])
+    df = pd.DataFrame(stat_keys)
+
+    # Keep only the desired columns
+    expected_columns = [
+        "key", "name", "description", "defaultMonitored", "rollupType",
+        "instanceType", "unit", "dataType2", "monitoring", "property", "dataType"
+    ]
+    
+    # Ensure all expected columns exist, fill missing with None
+    for col in expected_columns:
+        if col not in df.columns:
+            df[col] = None
+
+    df = df[expected_columns]
+
+    print(df.head())  # or return df
 else:
     print(f"Error: {response.status_code} - {response.text}")
