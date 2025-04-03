@@ -1,0 +1,1 @@
+GET https://<vrops-host>/suite-api/api/adapterkinds/VMWARE/resourcekinds/VirtualMachine/statkeys
