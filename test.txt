@@ -1,0 +1,10 @@
+# application.properties
+feature.rca-agent.enabled=true
+feature.kb-agent.enabled=false
+
+@Value("${feature.rca-agent.enabled}")
+private boolean rcaAgentEnabled;
+
+if (rcaAgentEnabled) {
+    // execute RCA agent logic
+}
