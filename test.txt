@@ -8,3 +8,18 @@ private boolean rcaAgentEnabled;
 if (rcaAgentEnabled) {
     // execute RCA agent logic
 }
+
+
+
+# Outer join on timestamp + metric_name
+merged = pd.merge(df1, df2, on=["timestamp", "metric_name"], how="outer")
+
+# Fill NaNs with None or 0 if needed
+merged["value_df1"] = merged["value_df1"].fillna(None)
+merged["value_df2"] = merged["value_df2"].fillna(None)
+
+# Combine into a single column (you can choose how — here's string form)
+merged["value_combined"] = merged[["value_df1", "value_df2"]].bfill(axis=1).iloc[:, 0]
+
+# Optional: drop the old columns
+merged = merged.drop(columns=["value_df1", "value_df2"])
