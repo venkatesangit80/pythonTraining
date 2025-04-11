@@ -1,39 +1,5 @@
-Celery for Efficient Parallel Processing in Capacity Planning
-
-Use Case
-
-As a Capacity Planning Team, we manage large-scale data processing tasks, including forecasting, capacity insights, and workload optimization. Transitioning from VROps to Prometheus is one such use case, where we leverage Celery to enhance efficiency. Previously, analyzing VROps data for 15 clusters took hours—Celery has reduced this to under 5 minutes. We aim to extend this approach to all complex capacity planning executions.
-
-Key Features
-
-Asynchronous Task Execution – Offloads heavy computations to distributed worker nodes.
-
-Parallel Processing – Enables concurrent execution of multiple workloads across clusters.
-
-Task Queues & Scheduling – Efficiently manages background tasks and prioritization.
-
-Scalability & Load Balancing – Dynamically scales based on workload demands.
-
-Fault Tolerance & Retry Mechanism – Ensures failed tasks are retried automatically.
-
-Monitoring & Logging – Provides real-time visibility into task execution status.
-
-Predictive Forecasting – Supports machine learning-based forecasting for capacity trends.
-
-Automated Anomaly Detection – Identifies over/under-utilization trends and future capacity risks.
-
-Integration with Prometheus & Other Metrics Sources – Streamlines data collection and processing.
-
-Non-Functional Requirements (NFRs)
-
-Performance – Reduce processing time from hours to minutes across all capacity planning workflows.
-
-Scalability – Support increasing workloads without impacting execution time.
-
-Reliability – Ensure high availability and fault tolerance for critical workflows.
-
-Maintainability – Enable easy debugging, logging, and job tracking.
-
-Security – Implement role-based access controls and encryption for data integrity.
-
-Celery will be the backbone for optimizing forecasting, capacity insights, and data processing, ensuring high efficiency, reliability, and scalability across all capacity planning functions.
+df['metric_data'] = df['metric_data'].where(df['metric_data'].notnull(), None)
+df['metric_name'] = df.apply(
+    lambda row: row['metric_data'] if row['metric_data'] is not None else row['metric_name'],
+    axis=1
+)
