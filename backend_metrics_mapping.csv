@@ -1,0 +1,151 @@
+schema,description
+JVM_Metric_1,JVM_CPU_Usage (%)
+Python_Metric_1,Python_CPU_Usage (%)
+DotNet_Metric_1,CLR_CPU_Usage (%)
+JVM_Metric_2,JVM_Heap_Used (MB)
+Python_Metric_2,Python_Memory_RSS (MB)
+DotNet_Metric_2,CLR_Memory_Used (MB)
+JVM_Metric_3,JVM_Thread_Count
+Python_Metric_3,Python_Thread_Count
+DotNet_Metric_3,CLR_Thread_Count
+JVM_Metric_4,JVM_GC_Pause_Time (ms)
+Python_Metric_4,Python_GC_Time (ms)
+DotNet_Metric_4,CLR_GC_Pause_Time (ms)
+JVM_Metric_5,JVM_Class_Loaded_Count
+Python_Metric_5,Python_Module_Load_Count
+DotNet_Metric_5,CLR_Assemblies_Loaded
+JVM_Metric_6,JVM_IO_Wait (%)
+Python_Metric_6,Python_IO_Wait (%)
+DotNet_Metric_6,CLR_IO_Wait (%)
+JVM_Metric_7,JVM_Disk_Reads/sec
+Python_Metric_7,Python_Disk_Reads/sec
+DotNet_Metric_7,CLR_Disk_Reads/sec
+JVM_Metric_8,JVM_Disk_Writes/sec
+Python_Metric_8,Python_Disk_Writes/sec
+DotNet_Metric_8,CLR_Disk_Writes/sec
+JVM_Metric_9,JVM_Network_Bytes_In
+Python_Metric_9,Python_Network_Bytes_In
+DotNet_Metric_9,CLR_Network_Bytes_In
+JVM_Metric_10,JVM_Network_Bytes_Out
+Python_Metric_10,Python_Network_Bytes_Out
+DotNet_Metric_10,CLR_Network_Bytes_Out
+JVM_Metric_11,JVM_File_Descriptor_Count
+Python_Metric_11,Python_Open_File_Count
+DotNet_Metric_11,CLR_Handle_Count
+JVM_Metric_12,JVM_Active_Sessions
+Python_Metric_12,Python_Active_Sessions
+DotNet_Metric_12,CLR_Active_Sessions
+JVM_Metric_13,JVM_HTTP_Request_Count
+Python_Metric_13,Python_Request_Count
+DotNet_Metric_13,CLR_Request_Count
+JVM_Metric_14,JVM_HTTP_Error_Count
+Python_Metric_14,Python_Error_Count
+DotNet_Metric_14,CLR_Error_Count
+JVM_Metric_15,JVM_HTTP_Response_Time (ms)
+Python_Metric_15,Python_Response_Time (ms)
+DotNet_Metric_15,CLR_Response_Time (ms)
+JVM_Metric_16,JVM_DB_Query_Count
+Python_Metric_16,Python_DB_Query_Count
+DotNet_Metric_16,CLR_DB_Query_Count
+JVM_Metric_17,JVM_DB_Connections_Open
+Python_Metric_17,Python_DB_Connections_Open
+DotNet_Metric_17,CLR_DB_Connections_Open
+JVM_Metric_18,JVM_DB_Query_Latency (ms)
+Python_Metric_18,Python_DB_Query_Latency (ms)
+DotNet_Metric_18,CLR_DB_Query_Latency (ms)
+JVM_Metric_19,JVM_DB_Error_Count
+Python_Metric_19,Python_DB_Error_Count
+DotNet_Metric_19,CLR_DB_Error_Count
+JVM_Metric_20,JVM_GC_Count_Full
+Python_Metric_20,Python_GC_Count
+DotNet_Metric_20,CLR_GC_Count
+JVM_Metric_21,JVM_PermGen_Usage (%)
+Python_Metric_21,Python_VirtualMem_Usage (%)
+DotNet_Metric_21,CLR_Stack_Memory_Usage (%)
+JVM_Metric_22,JVM_Eden_Space_Usage (%)
+Python_Metric_22,Python_Mem_Allocation_Rate
+DotNet_Metric_22,CLR_Heap_Allocation_Rate
+JVM_Metric_23,JVM_OldGen_Usage (%)
+Python_Metric_23,Python_Old_Object_Usage (%)
+DotNet_Metric_23,CLR_OldObject_Retention (%)
+JVM_Metric_24,JVM_Survivor_Space (%)
+Python_Metric_24,Python_Object_Promotions
+DotNet_Metric_24,CLR_Object_Promotions
+JVM_Metric_25,JVM_Metaspaces (MB)
+Python_Metric_25,Python_Cache_Size (MB)
+DotNet_Metric_25,CLR_Metadata_Size (MB)
+JVM_Metric_26,JVM_Class_Unload_Count
+Python_Metric_26,Python_Unloaded_Modules
+DotNet_Metric_26,CLR_Unloaded_Assemblies
+JVM_Metric_27,JVM_Thread_Blocking (%)
+Python_Metric_27,Python_Lock_Contention (%)
+DotNet_Metric_27,CLR_Lock_Contention (%)
+JVM_Metric_28,JVM_Thread_Deadlock_Count
+Python_Metric_28,Python_Deadlocks_Detected
+DotNet_Metric_28,CLR_Deadlock_Count
+JVM_Metric_29,JVM_JIT_Compilation_Time (ms)
+Python_Metric_29,Python_Interpreter_Lag (ms)
+DotNet_Metric_29,CLR_JIT_Compilation_Time (ms)
+JVM_Metric_30,JVM_Safepoint_Time (ms)
+Python_Metric_30,Python_Scheduler_Lag (ms)
+DotNet_Metric_30,CLR_Suspend_Time (ms)
+JVM_Metric_31,JVM_Code_Cache_Usage (%)
+Python_Metric_31,Python_Cached_Objects (%)
+DotNet_Metric_31,CLR_Code_Cache_Usage (%)
+JVM_Metric_32,JVM_Buffer_Pool_Usage (%)
+Python_Metric_32,Python_Buffer_Usage (%)
+DotNet_Metric_32,CLR_Buffer_Pool_Usage (%)
+JVM_Metric_33,JVM_Allocated_Heap (MB)
+Python_Metric_33,Python_Memory_Alloc (MB)
+DotNet_Metric_33,CLR_Memory_Alloc (MB)
+JVM_Metric_34,JVM_Freed_Heap (MB)
+Python_Metric_34,Python_Memory_Freed (MB)
+DotNet_Metric_34,CLR_Memory_Freed (MB)
+JVM_Metric_35,JVM_Page_Faults
+Python_Metric_35,Python_Page_Faults
+DotNet_Metric_35,CLR_Page_Faults
+JVM_Metric_36,JVM_Swap_Usage (MB)
+Python_Metric_36,Python_Swap_Usage (MB)
+DotNet_Metric_36,CLR_Swap_Usage (MB)
+JVM_Metric_37,JVM_GC_Frequency
+Python_Metric_37,Python_GC_Interval (s)
+DotNet_Metric_37,CLR_GC_Interval (s)
+JVM_Metric_38,JVM_Temp_File_Usage (MB)
+Python_Metric_38,Python_Temp_File_Usage (MB)
+DotNet_Metric_38,CLR_Temp_File_Usage (MB)
+JVM_Metric_39,JVM_Uptime (s)
+Python_Metric_39,Python_Process_Uptime (s)
+DotNet_Metric_39,CLR_Process_Uptime (s)
+JVM_Metric_40,JVM_Restart_Count
+Python_Metric_40,Python_Restart_Count
+DotNet_Metric_40,CLR_Restart_Count
+JVM_Metric_41,JVM_Application_Error_Count
+Python_Metric_41,Python_App_Error_Count
+DotNet_Metric_41,CLR_App_Error_Count
+JVM_Metric_42,JVM_Connection_Pool_Usage (%)
+Python_Metric_42,Python_Pool_Usage (%)
+DotNet_Metric_42,CLR_Thread_Pool_Usage (%)
+JVM_Metric_43,JVM_Socket_Timeouts
+Python_Metric_43,Python_Socket_Timeouts
+DotNet_Metric_43,CLR_Socket_Timeouts
+JVM_Metric_44,JVM_IO_Latency (ms)
+Python_Metric_44,Python_IO_Latency (ms)
+DotNet_Metric_44,CLR_IO_Latency (ms)
+JVM_Metric_45,JVM_Pending_Futures
+Python_Metric_45,Python_Async_Tasks_Pending
+DotNet_Metric_45,CLR_Pending_Async_Calls
+JVM_Metric_46,JVM_Servlet_Request_Size (KB)
+Python_Metric_46,Python_Request_Payload_Size (KB)
+DotNet_Metric_46,CLR_Request_Size (KB)
+JVM_Metric_47,JVM_Response_Size (KB)
+Python_Metric_47,Python_Response_Size (KB)
+DotNet_Metric_47,CLR_Response_Size (KB)
+JVM_Metric_48,JVM_Garbage_Bytes_Collected
+Python_Metric_48,Python_Objects_Collected
+DotNet_Metric_48,CLR_Objects_Collected
+JVM_Metric_49,JVM_DNS_Lookup_Time (ms)
+Python_Metric_49,Python_DNS_Lookup_Time (ms)
+DotNet_Metric_49,CLR_DNS_Lookup_Time (ms)
+JVM_Metric_50,JVM_Config_Change_Count
+Python_Metric_50,Python_Config_Change_Count
+DotNet_Metric_50,CLR_Config_Change_Count
