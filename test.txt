@@ -23,3 +23,6 @@ merged["value_combined"] = merged[["value_df1", "value_df2"]].bfill(axis=1).iloc
 
 # Optional: drop the old columns
 merged = merged.drop(columns=["value_df1", "value_df2"])
+
+
+df.loc[df['metric_data'].notnull(), 'metric_name'] = df['metric_data']
