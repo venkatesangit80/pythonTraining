@@ -1,4 +1,35 @@
 import requests
+
+# === Replace these with your actual values ===
+domain = "yourdomain.saas.appdynamics.com"
+client_id = "<client-id>@<account-name>"
+client_secret = "<client-secret>"
+token_url = f"https://{domain}/controller/api/oauth/access_token"
+
+# === Payload as a string ===
+payload = f"grant_type=client_credentials&client_id={client_id}&client_secret={client_secret}"
+
+# === Custom header with versioning ===
+headers = {
+    "Content-Type": "application/x-www-form-urlencoded;v=1"
+}
+
+# === Make the POST request ===
+response = requests.post(token_url, data=payload, headers=headers)
+
+# === Handle the response ===
+if response.status_code == 200:
+    token_data = response.json()
+    access_token = token_data.get("access_token")
+    print("✅ Access token received:", access_token)
+else:
+    print("❌ Failed to get token")
+    print("Status Code:", response.status_code)
+    print("Response:", response.text)
+
+
+
+import requests
 import json
 
 # === Configuration ===
