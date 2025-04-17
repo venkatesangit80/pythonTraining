@@ -1,4 +1,35 @@
 import requests
+import xml.etree.ElementTree as ET
+
+# AppDynamics API Config
+controller_url = "https://<your-domain>.saas.appdynamics.com"
+access_token = "<your_access_token>"
+
+# GET applications (will return XML)
+url = f"{controller_url}/controller/rest/applications"
+headers = {
+    "Authorization": f"Bearer {access_token}"
+}
+
+response = requests.get(url, headers=headers)
+
+if response.status_code == 200:
+    root = ET.fromstring(response.text)
+    apps = []
+
+    for app in root.findall("application"):
+        app_id = app.find("id").text
+        app_name = app.find("name").text
+        apps.append({"id": app_id, "name": app_name})
+
+    print("✅ Retrieved applications:")
+    for app in apps:
+        print(app)
+else:
+    print("❌ Error fetching applications:", response.status_code)
+
+
+import requests
 
 # === Replace these with your actual values ===
 domain = "yourdomain.saas.appdynamics.com"
