@@ -1,3 +1,5 @@
+#GET /controller/rest/applications/{app_id}/metrics?metric-path=Application Infrastructure Performance&recursive=true
+
 import requests
 import xml.etree.ElementTree as ET
 import pandas as pd
