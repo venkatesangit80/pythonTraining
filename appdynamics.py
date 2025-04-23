@@ -1,3 +1,24 @@
+from functools import reduce
+
+dfs = [df1, df2, df3]
+
+def merge_with_suffix(left, right, suffix_idx=[1]):
+    return pd.merge(
+        left,
+        right,
+        on='id',
+        suffixes=('', f'_df{suffix_idx[0]}')
+    )
+
+# Track suffix index using a mutable object (like a list)
+suffix_counter = [1]
+
+merged_df = reduce(
+    lambda l, r: merge_with_suffix(l, r, suffix_counter) or suffix_counter.__setitem__(0, suffix_counter[0]+1),
+    dfs
+)
+
+
 import requests
 import xml.etree.ElementTree as ET
 
