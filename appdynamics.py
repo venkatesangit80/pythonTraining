@@ -1,3 +1,25 @@
+import pandas as pd
+from functools import reduce
+
+# Suppose all your DataFrames have identical columns, including 'id'
+dfs = [df1, df2, df3, df4]  # all have columns: ['id', 'metric', 'value_p95']
+
+# Rename non-key columns with suffixes to avoid duplication
+key = 'id'
+dfs_renamed = []
+
+for idx, df in enumerate(dfs):
+    df_renamed = df.rename(columns={
+        col: f"{col}_df{idx+1}" if col != key else col for col in df.columns
+    })
+    dfs_renamed.append(df_renamed)
+
+# Merge them using reduce
+merged_df = reduce(lambda left, right: pd.merge(left, right, on=key, how='outer'), dfs_renamed)
+
+print(merged_df)
+
+
 from functools import reduce
 
 dfs = [df1, df2, df3]
