@@ -1,3 +1,5 @@
+Total monthly cost reflects last month’s data. Some components may have been removed since then, so current component-wise costs might not match the total.
+
 import requests
 import pandas as pd
 
