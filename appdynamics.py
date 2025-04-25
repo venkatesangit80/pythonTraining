@@ -1,3 +1,20 @@
+from apscheduler.schedulers.blocking import BlockingScheduler
+from datetime import datetime
+
+def my_task():
+    print(f"Task executed at {datetime.now()} 🚀")
+    # Your logic here (e.g., run another Python script, backup, etc.)
+
+# Create the scheduler
+scheduler = BlockingScheduler()
+
+# Schedule the job
+scheduler.add_job(my_task, 'cron', hour=4, minute=0)
+
+# Start the scheduler
+scheduler.start()
+
+
 import pandas as pd
 from functools import reduce
 
