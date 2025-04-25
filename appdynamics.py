@@ -1,3 +1,48 @@
+
+import requests
+from urllib.parse import quote
+
+# === CONFIGURATION ===
+CONTROLLER_URL = "https://domain.saas.appdynamics.com"
+USERNAME = "your_username@account"  # e.g., admin@customer1
+PASSWORD = "your_password_or_token"
+APPLICATION_NAME = "<<Application Name>>"
+
+# === METRIC PATH (as seen in the URL) ===
+metric_path = (
+    "Application Infrastructure Performance|"
+    "First|"
+    "Individual Nodes|"
+    "Seconnd|"
+    "JVM|Memory"
+)
+
+# === API PARAMETERS ===
+params = {
+    "metric-path": metric_path,
+    "time-range-type": "BEFORE_NOW",
+    "duration-in-mins": "60"
+}
+
+# === BUILD FINAL API URL ===
+api_url = (
+    f"{CONTROLLER_URL}/controller/rest/applications/"
+    f"{quote(APPLICATION_NAME)}/metrics"
+)
+
+# === API CALL ===
+response = requests.get(api_url, auth=(USERNAME, PASSWORD), params=params)
+
+# === RESPONSE HANDLING ===
+if response.status_code == 200:
+    print("=== Metrics Fetched Successfully ===\n")
+    print(response.text)
+else:
+    print(f"Request Failed | HTTP {response.status_code}")
+    print(response.text)
+
+
+
 from apscheduler.schedulers.blocking import BlockingScheduler
 from datetime import datetime
 
