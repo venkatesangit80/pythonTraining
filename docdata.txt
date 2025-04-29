@@ -1,3 +1,15 @@
+SELECT DISTINCT sql_id, 
+       sql_text, 
+       module, 
+       action, 
+       sample_time
+FROM v$active_session_history ash
+JOIN v$sql sql ON ash.sql_id = sql.sql_id
+WHERE ash.sample_time > SYSDATE - (2/24)
+ORDER BY ash.sample_time DESC;
+
+
+
 Total monthly cost reflects last month’s data. Some components may have been removed since then, so current component-wise costs might not match the total.
 
 import requests
