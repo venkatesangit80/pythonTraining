@@ -1,1 +1,14 @@
+SELECT * 
+FROM   DBA_OBJ_AUDIT_OPTS 
+WHERE  OBJECT_NAME = 'YOUR_TABLE_NAME'
+AND    DELETE_OPTION = 'BY ACCESS';
+
+
+SELECT username, obj_name, action_name, timestamp
+FROM   DBA_AUDIT_TRAIL
+WHERE  action_name = 'TRUNCATE'
+AND    obj_name = 'YOUR_TABLE_NAME'
+ORDER BY timestamp DESC;
+
+
 Yes, an MLP tower can just be a deep stack of Dense layers to boost expressiveness — but in more advanced designs, it’s used like an encoder or decoder module that’s trainable and pluggable into other tasks.
