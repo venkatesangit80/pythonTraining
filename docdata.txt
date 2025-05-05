@@ -1,3 +1,11 @@
+Base URL:
+https://nonprod.saas.appdynamics.com/controller/rest/applications/SREC UAT SRECentral/metric-data
+
+Query Parameters:
+- metric-path = Overall Application Performance|Number of Slow Calls
+- time-range-type = BEFORE_NOW
+- duration-in-mins = 60
+
 SELECT DISTINCT sql_id, 
        sql_text, 
        module, 
