@@ -1,64 +1,72 @@
-Base URL:
-https://nonprod.saas.appdynamics.com/controller/rest/applications/SREC UAT SRECentral/metric-data
+Great to hear you’re retrieving metrics successfully! For AppDynamics, UX-related metrics typically fall under the End User Experience and Business Transaction Performance categories.
 
-Query Parameters:
-- metric-path = Overall Application Performance|Number of Slow Calls
-- time-range-type = BEFORE_NOW
-- duration-in-mins = 60
+Here’s a list of commonly used UX metrics you can pull via the AppDynamics API:
 
-SELECT DISTINCT sql_id, 
-       sql_text, 
-       module, 
-       action, 
-       sample_time
-FROM v$active_session_history ash
-JOIN v$sql sql ON ash.sql_id = sql.sql_id
-WHERE ash.sample_time > SYSDATE - (2/24)
-ORDER BY ash.sample_time DESC;
+⸻
+
+✅ Core UX Metrics in AppDynamics
+
+1. End User Experience
+
+These measure frontend interaction quality from the user’s browser/mobile app:
+
+Metric Name	Description
+First Byte Time (ms)	Time until first byte is received
+DOM Ready Time (ms)	Time until DOM is interactive
+Page Render Time (ms)	Time until full page is rendered
+Total Page Load Time (ms)	Overall load time
+Number of End Users	Count of unique user interactions
+Number of Calls	Total user interaction calls
+Ajax Requests	Count of asynchronous JS calls
+JavaScript Errors	Count of client-side JS errors
+Network Request Time (ms)	Time spent in network requests
+Response Available Time (ms)	Time until response data is usable
 
 
 
-Total monthly cost reflects last month’s data. Some components may have been removed since then, so current component-wise costs might not match the total.
+⸻
 
-import requests
-import pandas as pd
+2. Business Transaction Performance
 
-# ==== CONFIG ====
-vrops_url = "https://<vrops-hostname>"  # e.g., https://vrops.company.com
-access_token = "<your-access-token>"    # Replace with your Bearer token
-adapter_kind = "VMWARE"
-resource_kind = "VirtualMachine"        # You can change to HostSystem, etc.
+These measure backend impact from user-triggered actions:
 
-# ==== API Endpoint ====
-url = f"{vrops_url}/suite-api/api/adapterkinds/{adapter_kind}/resourcekinds/{resource_kind}/statkeys"
+Metric Name	Description
+Average Response Time (ms)	Time taken per transaction
+Calls per Minute	How often the transaction is invoked
+Errors per Minute	Frequency of failures
+Slow Calls	Count of transactions exceeding threshold
+Very Slow Calls	Extreme latency cases
+Stall Count	Transactions that timed out or hung
+CPU Time	Resource usage linked to the transaction
 
-# ==== Headers ====
-headers = {
-    "Accept": "application/json",
-    "Authorization": f"Bearer {access_token}"
-}
 
-# ==== Request ====
-response = requests.get(url, headers=headers, verify=False)
 
-# ==== Parse to DataFrame ====
-if response.status_code == 200:
-    stat_keys = response.json().get("stat-keys", [])
-    df = pd.DataFrame(stat_keys)
+⸻
 
-    # Keep only the desired columns
-    expected_columns = [
-        "key", "name", "description", "defaultMonitored", "rollupType",
-        "instanceType", "unit", "dataType2", "monitoring", "property", "dataType"
-    ]
-    
-    # Ensure all expected columns exist, fill missing with None
-    for col in expected_columns:
-        if col not in df.columns:
-            df[col] = None
+🔍 Where to Find These in Metric Paths
 
-    df = df[expected_columns]
+Example Metric Path for UX:
 
-    print(df.head())  # or return df
-else:
-    print(f"Error: {response.status_code} - {response.text}")
+End User Experience|Pages|Base Page|Total Page Load Time (ms)
+
+Example for Transaction Performance:
+
+Business Transaction Performance|<BT Name>|Average Response Time (ms)
+
+
+
+⸻
+
+✅ Tips for Fetching
+	•	Use the /metrics?metric-path=...&recursive=true API to explore
+	•	Look under:
+	•	End User Experience|Pages
+	•	End User Experience|Geo
+	•	Business Transaction Performance|<BT>
+	•	Don’t forget to use rollup=false in /metric-data API to get raw values
+
+⸻
+
+Would you like a ready-made script or PromQL-like summary for these metric paths?
+
+You’re now collecting rich UX telemetry — perfect for anomaly detection, forecasting, and experience optimization 🔍📊🔥
