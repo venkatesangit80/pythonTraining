@@ -1,72 +1,31 @@
-Great to hear you’re retrieving metrics successfully! For AppDynamics, UX-related metrics typically fall under the End User Experience and Business Transaction Performance categories.
+import xml.etree.ElementTree as ET
+from datetime import datetime
+import pandas as pd
 
-Here’s a list of commonly used UX metrics you can pull via the AppDynamics API:
+# Step 1: Parse XML string
+tree = ET.fromstring(xml_string)  # or ET.parse("file.xml") if from file
 
-⸻
+records = []
 
-✅ Core UX Metrics in AppDynamics
+# Step 2: Traverse and extract values
+for metric_data in tree.findall("metric-data"):
+    path = metric_data.find("metricPath").text
+    for mv in metric_data.find("metricValues").findall("metric-value"):
+        timestamp = datetime.fromtimestamp(int(mv.find("startTimeInMillis").text) / 1000)
+        value = mv.findtext("value")
+        min_val = mv.findtext("min")
+        max_val = mv.findtext("max")
+        count = mv.findtext("count")
 
-1. End User Experience
+        records.append({
+            "metric_path": path,
+            "timestamp": timestamp,
+            "value": float(value) if value else None,
+            "min": float(min_val) if min_val else None,
+            "max": float(max_val) if max_val else None,
+            "count": int(count) if count else None
+        })
 
-These measure frontend interaction quality from the user’s browser/mobile app:
-
-Metric Name	Description
-First Byte Time (ms)	Time until first byte is received
-DOM Ready Time (ms)	Time until DOM is interactive
-Page Render Time (ms)	Time until full page is rendered
-Total Page Load Time (ms)	Overall load time
-Number of End Users	Count of unique user interactions
-Number of Calls	Total user interaction calls
-Ajax Requests	Count of asynchronous JS calls
-JavaScript Errors	Count of client-side JS errors
-Network Request Time (ms)	Time spent in network requests
-Response Available Time (ms)	Time until response data is usable
-
-
-
-⸻
-
-2. Business Transaction Performance
-
-These measure backend impact from user-triggered actions:
-
-Metric Name	Description
-Average Response Time (ms)	Time taken per transaction
-Calls per Minute	How often the transaction is invoked
-Errors per Minute	Frequency of failures
-Slow Calls	Count of transactions exceeding threshold
-Very Slow Calls	Extreme latency cases
-Stall Count	Transactions that timed out or hung
-CPU Time	Resource usage linked to the transaction
-
-
-
-⸻
-
-🔍 Where to Find These in Metric Paths
-
-Example Metric Path for UX:
-
-End User Experience|Pages|Base Page|Total Page Load Time (ms)
-
-Example for Transaction Performance:
-
-Business Transaction Performance|<BT Name>|Average Response Time (ms)
-
-
-
-⸻
-
-✅ Tips for Fetching
-	•	Use the /metrics?metric-path=...&recursive=true API to explore
-	•	Look under:
-	•	End User Experience|Pages
-	•	End User Experience|Geo
-	•	Business Transaction Performance|<BT>
-	•	Don’t forget to use rollup=false in /metric-data API to get raw values
-
-⸻
-
-Would you like a ready-made script or PromQL-like summary for these metric paths?
-
-You’re now collecting rich UX telemetry — perfect for anomaly detection, forecasting, and experience optimization 🔍📊🔥
+# Step 3: Convert to DataFrame
+df = pd.DataFrame(records)
+print(df.head())
