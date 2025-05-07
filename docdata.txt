@@ -1,31 +1,66 @@
+import requests
 import xml.etree.ElementTree as ET
-from datetime import datetime
 import pandas as pd
+from datetime import datetime
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
-# Step 1: Parse XML string
-tree = ET.fromstring(xml_string)  # or ET.parse("file.xml") if from file
+# Config
+controller_url = "https://your-account.saas.appdynamics.com"
+app_name = "YourAppName"
+access_token = "your_token"
+headers = {"Authorization": f"Bearer {access_token}"}
 
-records = []
+# UX Metrics to pull
+ux_metrics = {
+    "Response Time (ms)": "Business Transaction Performance|YourApp|BTName|Average Response Time (ms)",
+    "Error Count": "Business Transaction Performance|YourApp|BTName|Errors per Minute",
+    "Throughput": "Business Transaction Performance|YourApp|BTName|Calls per Minute"
+}
 
-# Step 2: Traverse and extract values
-for metric_data in tree.findall("metric-data"):
-    path = metric_data.find("metricPath").text
-    for mv in metric_data.find("metricValues").findall("metric-value"):
-        timestamp = datetime.fromtimestamp(int(mv.find("startTimeInMillis").text) / 1000)
-        value = mv.findtext("value")
-        min_val = mv.findtext("min")
-        max_val = mv.findtext("max")
-        count = mv.findtext("count")
+# Time range in milliseconds
+start_time = int(datetime(2023, 8, 31, 12, 0).timestamp() * 1000)
+end_time = int(datetime(2023, 8, 31, 12, 30).timestamp() * 1000)
 
-        records.append({
-            "metric_path": path,
-            "timestamp": timestamp,
-            "value": float(value) if value else None,
-            "min": float(min_val) if min_val else None,
-            "max": float(max_val) if max_val else None,
-            "count": int(count) if count else None
-        })
+# === Function to fetch and parse XML metric data ===
+def fetch_metric(name, path):
+    url = f"{controller_url}/controller/rest/applications/{app_name}/metric-data"
+    params = {
+        "metric-path": path,
+        "time-range-type": "BETWEEN_TIMES",
+        "start-time": start_time,
+        "end-time": end_time,
+        "rollup": "false",
+        "output": "XML"
+    }
 
-# Step 3: Convert to DataFrame
-df = pd.DataFrame(records)
-print(df.head())
+    response = requests.get(url, headers=headers, params=params)
+    data = []
+
+    if response.ok:
+        root = ET.fromstring(response.text)
+        for metric_data in root.findall("metric-data"):
+            for mv in metric_data.find("metricValues").findall("metric-value"):
+                timestamp = datetime.fromtimestamp(int(mv.find("startTimeInMillis").text) / 1000)
+                value = mv.findtext("value")
+                if value:
+                    data.append({"timestamp": timestamp, name: float(value)})
+    else:
+        print(f"❌ Failed for {name}: {response.status_code}")
+    return pd.DataFrame(data)
+
+# === Run in parallel ===
+with ThreadPoolExecutor(max_workers=3) as executor:
+    futures = {executor.submit(fetch_metric, name, path): name for name, path in ux_metrics.items()}
+
+    dfs = []
+    for future in as_completed(futures):
+        df = future.result()
+        dfs.append(df)
+
+# === Merge all on timestamp ===
+df_merged = dfs[0]
+for df in dfs[1:]:
+    df_merged = df_merged.merge(df, on="timestamp", how="outer")
+
+df_merged = df_merged.sort_values("timestamp")
+print(df_merged.head())
