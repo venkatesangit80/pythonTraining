@@ -11,4 +11,14 @@ AND    obj_name = 'YOUR_TABLE_NAME'
 ORDER BY timestamp DESC;
 
 
-Yes, an MLP tower can just be a deep stack of Dense layers to boost expressiveness — but in more advanced designs, it’s used like an encoder or decoder module that’s trainable and pluggable into other tasks.
+Yes, an MLP tower can just be a deep stack of Dense layers to boost expressiveness — but in more advanced designs, it’s used like an encoder or decoder module that’s trainable and pluggable into other tasks
+
+
+
+.
+
+SELECT TO_CHAR(
+         TO_TIMESTAMP('07-MAY-26 02.00.00.000000000 PM', 'DD-MON-RR HH.MI.SS.FF9 AM'),
+         'YYYY-MM-DD HH24:MI:SS'
+       ) AS formatted_datetime
+FROM dual;
