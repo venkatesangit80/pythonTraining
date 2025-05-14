@@ -1,3 +1,9 @@
+import pandas as pd
+
+# Sample: convert a column in-place
+df['timestamp'] = pd.to_datetime(df['timestamp'], format='%d-%b-%y %I:%M:%S.%f %p')
+
+
 SELECT * 
 FROM   DBA_OBJ_AUDIT_OPTS 
 WHERE  OBJECT_NAME = 'YOUR_TABLE_NAME'
