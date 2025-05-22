@@ -1,30 +1,53 @@
-import pandas as pd
+Here’s a refined and professional version of your user story titled “Metric VROPs: Creating Prom Friendly API”, written from a lead software engineer’s perspective with detailed scope and structured Definition of Ready + Acceptance Criteria:
 
-# Sample: convert a column in-place
-df['timestamp'] = pd.to_datetime(df['timestamp'], format='%d-%b-%y %I:%M:%S.%f %p')
+⸻
 
+User Story
 
-SELECT * 
-FROM   DBA_OBJ_AUDIT_OPTS 
-WHERE  OBJECT_NAME = 'YOUR_TABLE_NAME'
-AND    DELETE_OPTION = 'BY ACCESS';
+Title: Metric VROPs – Implement Prometheus-Friendly API Layer
 
+⸻
 
-SELECT username, obj_name, action_name, timestamp
-FROM   DBA_AUDIT_TRAIL
-WHERE  action_name = 'TRUNCATE'
-AND    obj_name = 'YOUR_TABLE_NAME'
-ORDER BY timestamp DESC;
+Summary
 
+As a Lead Software Engineer,
+I want to implement a Prometheus-compatible API that serves VROPs (vRealize Operations) metrics,
+So that Celery-based background jobs can feed Redis, and Grafana or any Prometheus visualization tool can consume the data in a reliable and standardized way.
 
-Yes, an MLP tower can just be a deep stack of Dense layers to boost expressiveness — but in more advanced designs, it’s used like an encoder or decoder module that’s trainable and pluggable into other tasks
+⸻
 
+Description
 
+This implementation will bridge the VROPs metric ingestion pipeline with Prometheus-friendly consumers (such as Grafana) through a clean, performant, and cache-driven REST API.
 
-.
+Key steps:
+	1.	Data Writing Layer
+	•	Ensure Celery workers (or schedulers) are continuously and reliably writing VROPs metric data into Redis with expected keys and TTLs.
+	•	Validate metrics include: CPU, memory, disk, and cluster health scores with timestamps.
+	2.	API Layer
+	•	Build a REST API using FastAPI or Flask that reads from Redis and exposes endpoints in a format Prometheus or Grafana understands.
+	•	Support for Prometheus-style scrape or /metrics endpoint returning text/plain content-type if required.
+	3.	Visualization Layer
+	•	Confirm Grafana is able to query the API, parse metrics correctly, and display real-time dashboards.
+	•	Ensure the API supports tags/labels for filtering by cluster, object, and metric type.
 
-SELECT TO_CHAR(
-         TO_TIMESTAMP('07-MAY-26 02.00.00.000000000 PM', 'DD-MON-RR HH.MI.SS.FF9 AM'),
-         'YYYY-MM-DD HH24:MI:SS'
-       ) AS formatted_datetime
-FROM dual;
+⸻
+
+✅ Acceptance Criteria
+	•	✅ Celery successfully writes metrics into Redis with appropriate structure, keys, and expiry
+	•	✅ API responds correctly with current metric values from Redis
+	•	✅ API supports Prometheus-compatible formatting (or JSON for Grafana plugins)
+	•	✅ Grafana dashboards are able to poll the API and render real-time data without timeout
+	•	✅ Logging and error handling are in place (e.g., if Redis is down or data is stale)
+	•	✅ Code is committed, documented, and deployed to internal dev environment
+	•	✅ Walkthrough/demo presented to team for future extensibility
+
+⸻
+
+Notes
+	•	Consider using Prometheus /metrics format only if explicitly needed; otherwise, JSON endpoints can be Grafana-compatible.
+	•	Redis keys should follow a naming convention: vrops:<cluster>:<metric>:<timestamp>.
+
+⸻
+
+Would you like a skeleton code template for the API or a Redis key design pattern next?
