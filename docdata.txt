@@ -1,66 +1,31 @@
-import requests
-import xml.etree.ElementTree as ET
-import pandas as pd
-from datetime import datetime
-from concurrent.futures import ThreadPoolExecutor, as_completed
+Here is a professional and well-structured email you can send to your stakeholder customer:
 
-# Config
-controller_url = "https://your-account.saas.appdynamics.com"
-app_name = "YourAppName"
-access_token = "your_token"
-headers = {"Authorization": f"Bearer {access_token}"}
+⸻
 
-# UX Metrics to pull
-ux_metrics = {
-    "Response Time (ms)": "Business Transaction Performance|YourApp|BTName|Average Response Time (ms)",
-    "Error Count": "Business Transaction Performance|YourApp|BTName|Errors per Minute",
-    "Throughput": "Business Transaction Performance|YourApp|BTName|Calls per Minute"
-}
+Subject: Clarification on AppDynamics Heap vs Grafana Cloud Infrastructure Metrics
 
-# Time range in milliseconds
-start_time = int(datetime(2023, 8, 31, 12, 0).timestamp() * 1000)
-end_time = int(datetime(2023, 8, 31, 12, 30).timestamp() * 1000)
+Dear [Customer’s Name],
 
-# === Function to fetch and parse XML metric data ===
-def fetch_metric(name, path):
-    url = f"{controller_url}/controller/rest/applications/{app_name}/metric-data"
-    params = {
-        "metric-path": path,
-        "time-range-type": "BETWEEN_TIMES",
-        "start-time": start_time,
-        "end-time": end_time,
-        "rollup": "false",
-        "output": "XML"
-    }
+I hope you’re doing well.
 
-    response = requests.get(url, headers=headers, params=params)
-    data = []
+This is in reference to the discrepancy observed between the AppDynamics heap metric (showing ~30%) and the Grafana Cloud TAS instance’s infrastructure memory metric (showing ~90%).
 
-    if response.ok:
-        root = ET.fromstring(response.text)
-        for metric_data in root.findall("metric-data"):
-            for mv in metric_data.find("metricValues").findall("metric-value"):
-                timestamp = datetime.fromtimestamp(int(mv.find("startTimeInMillis").text) / 1000)
-                value = mv.findtext("value")
-                if value:
-                    data.append({"timestamp": timestamp, name: float(value)})
-    else:
-        print(f"❌ Failed for {name}: {response.status_code}")
-    return pd.DataFrame(data)
+I’d like to clarify that the heap metric in AppDynamics is an application-level metric. It specifically measures the heap memory portion allocated for the application’s runtime, such as object creation and garbage collection. This does not account for other memory regions such as metaspace, permgen, thread stacks, or native memory.
 
-# === Run in parallel ===
-with ThreadPoolExecutor(max_workers=3) as executor:
-    futures = {executor.submit(fetch_metric, name, path): name for name, path in ux_metrics.items()}
+In contrast, the Grafana Cloud metric for TAS reflects infrastructure-level memory utilization. It captures the total memory usage of the instance, including all system-level allocations—spanning across application memory (heap and non-heap), system processes, and other container-level overheads.
 
-    dfs = []
-    for future in as_completed(futures):
-        df = future.result()
-        dfs.append(df)
+Additionally, AppDynamics offers other relevant memory metrics—such as non-heap memory usage, permgen/metaspace, and overall memory pools—which, when considered together, provide a more complete picture of the application’s memory consumption. These metrics, when added up, often align more closely with the infrastructure-level utilization reported by Grafana Cloud.
 
-# === Merge all on timestamp ===
-df_merged = dfs[0]
-for df in dfs[1:]:
-    df_merged = df_merged.merge(df, on="timestamp", how="outer")
+Please let us know if you’d like a deep dive into these additional metrics or if you’d prefer a consolidated view for correlation.
 
-df_merged = df_merged.sort_values("timestamp")
-print(df_merged.head())
+Looking forward to your thoughts.
+
+Warm regards,
+[Your Full Name]
+[Your Role]
+[Your Company]
+[Your Contact Information]
+
+⸻
+
+Let me know if you’d like this rewritten in a shorter form or tailored to a different tone.
