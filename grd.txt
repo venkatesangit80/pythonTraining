@@ -1,0 +1,38 @@
+from guardrails import Guard
+from openai import OpenAI
+import os
+
+# Load Guard schema for US financial compliance
+guard = Guard.from_rail_file("planner_rail.xml")
+
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+user_input = "The system failed after a $9000 wire transfer flagged account 847211 with potential fraud activity"
+
+output, history = guard(
+    prompt="What is the next action in this observability issue: " + user_input,
+    llm_api=client.chat.completions.create,
+    prompt_params={
+        "model": "gpt-4",
+        "messages": [{"role": "user", "content": user_input}]
+    }
+)
+
+print("Validated Response:", output)
+
+
+
+
+<rail version="0.1">
+<output>
+    <string name="action" required="true"/>
+    <string name="target"/>
+    <string name="reason"/>
+</output>
+
+<validators>
+    <regex name="no_sensitive_info" match="^(?!.*\\b(ssn|account|routing|credit|card|transfer|fraud|balance|wire|email|phone|address|zip|dob|social security|ach|transaction)\\b).*$"
+        on="reason"
+        description="No U.S. financial PII or sensitive terms allowed in 'reason'." />
+</validators>
+</rail>
