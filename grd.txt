@@ -262,3 +262,49 @@ output, history = guard(
 # === Final Output ===
 print("✅ Validated & Structured Output:")
 print(output)
+
+
+Single Agent Example
+
+import os
+from langchain.chat_models import ChatOpenAI
+from langchain.prompts import PromptTemplate
+from langchain.chains import LLMChain
+
+# === Sample input from perceptive agent ===
+server_data = [
+    {"server": "srv1", "over_util_reason": "CPU"},
+    {"server": "srv2", "over_util_reason": "memory"},
+    {"server": "srv3", "over_util_reason": "both"},
+]
+
+# Convert to string for LLM
+input_summary = "\n".join(
+    f"{item['server']}: over-utilized due to {item['over_util_reason']}" for item in server_data
+)
+
+# === Prompt ===
+prompt_template = PromptTemplate(
+    input_variables=["status"],
+    template="""
+You are an observability assistant. Given the server over-utilization status below, summarize it clearly for a non-technical stakeholder:
+
+{status}
+
+Respond in 2–3 sentences, in plain English.
+"""
+)
+
+# === LLM Setup ===
+llm = ChatOpenAI(
+    model="gpt-4",
+    temperature=0.3,
+    openai_api_key=os.getenv("OPENAI_API_KEY")
+)
+
+chain = LLMChain(llm=llm, prompt=prompt_template)
+
+# === Run ===
+response = chain.run({"status": input_summary})
+
+print("\n🧠 User-Friendly Summary:\n", response)
