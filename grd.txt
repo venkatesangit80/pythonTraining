@@ -308,3 +308,64 @@ chain = LLMChain(llm=llm, prompt=prompt_template)
 response = chain.run({"status": input_summary})
 
 print("\n🧠 User-Friendly Summary:\n", response)
+
+Same agent with security
+
+import os
+from guardrails import Guard
+from openai import OpenAI
+
+# === Step 1: Define Guardrails Schema ===
+RAIL_SCHEMA = """
+<rail version="0.1">
+<output>
+    <string name="summary" required="true"/>
+</output>
+
+<validators>
+    <regex name="no_sensitive_terms"
+           match="^(?!.*\\b(ssn|account|password|secret|confidential|customer)\\b).*$"
+           on="summary"
+           description="Do not include sensitive terms in the output." />
+</validators>
+</rail>
+"""
+
+guard = Guard.from_rail_string(RAIL_SCHEMA)
+
+# === Step 2: Setup OpenAI Client ===
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+# === Step 3: Input from Perceptive Agent ===
+server_data = [
+    {"server": "srv1", "over_util_reason": "CPU"},
+    {"server": "srv2", "over_util_reason": "memory"},
+    {"server": "srv3", "over_util_reason": "both"},
+]
+
+# Convert to readable string
+input_summary = "\n".join(
+    f"{item['server']}: over-utilized due to {item['over_util_reason']}" for item in server_data
+)
+
+# === Step 4: Prompt ===
+prompt = f"""
+You are an observability assistant. Given the server over-utilization status below, summarize it clearly for a non-technical stakeholder:
+
+{input_summary}
+
+Respond in 2–3 sentences, in plain English. Do not use any terms that could imply customer data, financial info, or credentials.
+"""
+
+# === Step 5: Guardrails-Validated LLM Call ===
+output, history = guard(
+    prompt=prompt,
+    llm_api=client.chat.completions.create,
+    prompt_params={
+        "model": "gpt-4",
+        "messages": [{"role": "user", "content": prompt}]
+    }
+)
+
+# === Step 6: Final Output ===
+print("✅ User-Safe Summary:\n", output["summary"])
