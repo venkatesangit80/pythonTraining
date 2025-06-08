@@ -36,3 +36,91 @@ print("Validated Response:", output)
         description="No U.S. financial PII or sensitive terms allowed in 'reason'." />
 </validators>
 </rail>
+
+
+
+
+
+PErfect code
+
+import os
+from langchain.chat_models import ChatOpenAI
+from langchain.agents import initialize_agent, AgentType
+from langchain.tools import tool
+from guardrails import Guard
+
+# === Step 1: Define Tools ===
+@tool
+def add(x: int, y: int) -> int:
+    """Add two numbers together."""
+    return x + y
+
+@tool
+def multiply(x: int, y: int) -> int:
+    """Multiply two numbers together."""
+    return x * y
+
+@tool
+def divide(x: int, y: int) -> float:
+    """Divide x by y (returns float)."""
+    if y == 0:
+        return "Cannot divide by zero."
+    return x / y
+
+tools = [add, multiply, divide]
+
+# === Step 2: Define Guardrails RAIL schema ===
+RAIL_SCHEMA = """
+<rail version="0.1">
+<output>
+    <string name="action" required="true" />
+    <string name="result" required="true" />
+</output>
+
+<validators>
+    <regex name="no_sensitive_words"
+           match="^(?!.*\\b(password|ssn|account|secret)\\b).*$"
+           on="result"
+           description="No sensitive info allowed in result." />
+</validators>
+</rail>
+"""
+
+# === Step 3: Create Guard Object ===
+guard = Guard.from_rail_string(RAIL_SCHEMA)
+
+# === Step 4: LangChain LLM and Agent Setup ===
+llm = ChatOpenAI(model="gpt-4", temperature=0.2, openai_api_key=os.getenv("OPENAI_API_KEY"))
+
+agent = initialize_agent(
+    tools=tools,
+    llm=llm,
+    agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
+    verbose=True
+)
+
+# === Step 5: User Prompt ===
+user_prompt = "Add 10 and 20, then multiply the result by 3. Finally, divide it by 2."
+
+# === Step 6: LangChain Agent Output ===
+agent_response = agent.run(user_prompt)
+
+# === Step 7: Validate Output with Guardrails ===
+# Simulate structured response from agent
+model_output = f"""
+action: math_chain
+result: {agent_response}
+"""
+
+output, history = guard(
+    prompt="Summarize tool use result in JSON format.",
+    output=model_output
+)
+
+print("\n✅ Final Validated Output:", output)
+
+
+
+pip install langchain openai guardrails-ai
+export OPENAI_API_KEY=sk-xxxxx
+python secure_tool_agent.py
