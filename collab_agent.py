@@ -1,3 +1,7 @@
+#export OPENAI_API_KEY=sk-xxxxx
+pip install openai
+python collaboration_agent_llm.py
+
 import os
 from openai import OpenAI
 from typing import List, Dict
