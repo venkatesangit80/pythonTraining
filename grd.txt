@@ -124,3 +124,141 @@ print("\n✅ Final Validated Output:", output)
 pip install langchain openai guardrails-ai
 export OPENAI_API_KEY=sk-xxxxx
 python secure_tool_agent.py
+
+
+
+
+Complete Gaurd Rail
+
+import os
+from langchain.chat_models import ChatOpenAI
+from langchain.prompts import PromptTemplate
+from guardrails import Guard
+from openai import OpenAI
+
+# === 1. Define RAIL Schema ===
+RAIL_SCHEMA = """
+<rail version="0.1">
+<output>
+    <string name="action" required="true"/>
+    <string name="result" required="true"/>
+</output>
+
+<validators>
+    <regex name="no_sensitive_words"
+           match="^(?!.*\\b(password|ssn|account|secret|routing|credit card)\\b).*$"
+           on="result"
+           description="No sensitive info allowed in result." />
+</validators>
+</rail>
+"""
+
+guard = Guard.from_rail_string(RAIL_SCHEMA)
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+# === 2. LangChain Prompt Template ===
+template = PromptTemplate.from_template(
+    "Given the task: {task}, break it into action steps and return only the final result."
+)
+
+task = "Add 100 and 200, then divide the result by 3."
+
+# === 3. Apply Guardrails to LLM Response ===
+final_prompt = template.format(task=task)
+
+output, history = guard(
+    prompt=final_prompt,
+    llm_api=client.chat.completions.create,
+    prompt_params={
+        "model": "gpt-4",
+        "messages": [{"role": "user", "content": final_prompt}]
+    }
+)
+
+# === 4. Print Output ===
+print("🔐 Guardrails-Protected Output from LangChain Prompt:")
+print(output)
+
+
+
+
+Use the below code for now
+
+
+
+import os
+from langchain.chat_models import ChatOpenAI
+from langchain.agents import initialize_agent, AgentType
+from langchain.tools import tool
+from guardrails import Guard
+from openai import OpenAI
+
+# === Define Guardrails Schema ===
+RAIL_SCHEMA = """
+<rail version="0.1">
+<output>
+    <string name="action" required="true"/>
+    <string name="result" required="true"/>
+</output>
+
+<validators>
+    <regex name="no_sensitive_words"
+           match="^(?!.*\\b(password|ssn|account|secret|credit card|routing|token)\\b).*$"
+           on="result"
+           description="No sensitive info allowed in result." />
+</validators>
+</rail>
+"""
+
+guard = Guard.from_rail_string(RAIL_SCHEMA)
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+# === Define LangChain Tools ===
+@tool
+def add(x: int, y: int) -> int:
+    """Add two numbers together."""
+    return x + y
+
+@tool
+def multiply(x: int, y: int) -> int:
+    """Multiply two numbers together."""
+    return x * y
+
+@tool
+def divide(x: int, y: int) -> float:
+    """Divide x by y (returns float)."""
+    if y == 0:
+        return "Cannot divide by zero."
+    return x / y
+
+tools = [add, multiply, divide]
+
+# === Initialize LangChain Agent ===
+llm = ChatOpenAI(model="gpt-4", temperature=0.1, openai_api_key=os.getenv("OPENAI_API_KEY"))
+
+agent = initialize_agent(
+    tools=tools,
+    llm=llm,
+    agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
+    verbose=True
+)
+
+# === User Prompt and Agent Reasoning ===
+prompt = "Add 20 and 30, then multiply the result by 2. What is the final result?"
+
+agent_result = agent.run(prompt)
+
+# === Guardrails Validation ===
+guard_input = f"""
+action: math_tool_chain
+result: {agent_result}
+"""
+
+output, history = guard(
+    prompt="Validate structured agent output with safety checks.",
+    output=guard_input
+)
+
+# === Final Output ===
+print("✅ Validated & Structured Output:")
+print(output)
