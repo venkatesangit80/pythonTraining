@@ -29,3 +29,12 @@ Warm regards,
 ⸻
 
 Let me know if you’d like this rewritten in a shorter form or tailored to a different tone.
+
+
+
+(
+  rate(node_network_receive_bytes_total{device="eth0"}[5m]) +
+  rate(node_network_transmit_bytes_total{device="eth0"}[5m])
+)
+/ 1250000000
+* 100
