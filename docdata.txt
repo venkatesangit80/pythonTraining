@@ -22,3 +22,37 @@ response = llm.invoke([
 ])
 
 print(response.content)
+
+
+
+from langchain.agents import initialize_agent, AgentType
+from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain.tools import Tool
+
+# Initialize Gemini Flash (model='gemini-1.5-flash' or 'gemini-pro' also valid)
+llm = ChatGoogleGenerativeAI(
+    model="gemini-1.5-flash",
+    google_api_key="your-google-api-key",
+    temperature=0.7
+)
+
+# (Optional) Define tools
+tools = [
+    Tool.from_function(
+        func=lambda x: f"Echo: {x}",
+        name="EchoTool",
+        description="Returns what was said"
+    )
+]
+
+# Initialize agent with Gemini Flash
+agent = initialize_agent(
+    tools=tools,
+    llm=llm,
+    agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
+    verbose=True
+)
+
+# Test it
+response = agent.run("What is the capital of France?")
+print(response)
