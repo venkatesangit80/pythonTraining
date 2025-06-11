@@ -1,40 +1,24 @@
-Here is a professional and well-structured email you can send to your stakeholder customer:
+from langchain_openai import ChatOpenAI
+import httpx
 
-⸻
+# Define your API key
+api_key = "your-org-api-key"
 
-Subject: Clarification on AppDynamics Heap vs Grafana Cloud Infrastructure Metrics
+# Create a custom HTTPX client with SSL verification disabled
+httpx_client = httpx.Client(verify=False)
 
-Dear [Customer’s Name],
-
-I hope you’re doing well.
-
-This is in reference to the discrepancy observed between the AppDynamics heap metric (showing ~30%) and the Grafana Cloud TAS instance’s infrastructure memory metric (showing ~90%).
-
-I’d like to clarify that the heap metric in AppDynamics is an application-level metric. It specifically measures the heap memory portion allocated for the application’s runtime, such as object creation and garbage collection. This does not account for other memory regions such as metaspace, permgen, thread stacks, or native memory.
-
-In contrast, the Grafana Cloud metric for TAS reflects infrastructure-level memory utilization. It captures the total memory usage of the instance, including all system-level allocations—spanning across application memory (heap and non-heap), system processes, and other container-level overheads.
-
-Additionally, AppDynamics offers other relevant memory metrics—such as non-heap memory usage, permgen/metaspace, and overall memory pools—which, when considered together, provide a more complete picture of the application’s memory consumption. These metrics, when added up, often align more closely with the infrastructure-level utilization reported by Grafana Cloud.
-
-Please let us know if you’d like a deep dive into these additional metrics or if you’d prefer a consolidated view for correlation.
-
-Looking forward to your thoughts.
-
-Warm regards,
-[Your Full Name]
-[Your Role]
-[Your Company]
-[Your Contact Information]
-
-⸻
-
-Let me know if you’d like this rewritten in a shorter form or tailored to a different tone.
-
-
-
-(
-  rate(node_network_receive_bytes_total{device="eth0"}[5m]) +
-  rate(node_network_transmit_bytes_total{device="eth0"}[5m])
+# Initialize the ChatOpenAI instance
+llm = ChatOpenAI(
+    model="gpt-3.5-turbo",
+    temperature=0.7,
+    api_key=api_key,
+    http_client=httpx_client
 )
-/ 1250000000
-* 100
+
+# Make a call to test
+response = llm.invoke([
+    ("system", "You are a helpful assistant."),
+    ("user", "Explain entropy in simple terms.")
+])
+
+print(response.content)
