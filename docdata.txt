@@ -1,94 +1,44 @@
-from langchain_openai import ChatOpenAI
-import httpx
+def health_check_agent():
+    return "Health: 3 servers overutilized, 1 underutilized."
 
-# Define your API key
-api_key = "your-org-api-key"
+def forecast_agent():
+    return "Forecast: CPU load will exceed 80% in next 30 minutes."
 
-# Create a custom HTTPX client with SSL verification disabled
-httpx_client = httpx.Client(verify=False)
+def anomaly_detection_agent():
+    return "Anomaly Detected: Response time spike in App3."
 
-# Initialize the ChatOpenAI instance
-llm = ChatOpenAI(
-    model="gpt-3.5-turbo",
-    temperature=0.7,
-    api_key=api_key,
-    http_client=httpx_client
-)
+def select_agents_from_prompt(user_prompt, agent_list):
+    prompt = f"""
+You are an agent selector. Available agents are:
+{', '.join(agent_list)}.
 
-# Make a call to test
-response = llm.invoke([
-    ("system", "You are a helpful assistant."),
-    ("user", "Explain entropy in simple terms.")
-])
+User has asked: "{user_prompt}"
 
-print(response.content)
+Return a Python list of agents to execute. Only include agent names from the list above. Example: ['health_check_agent', 'forecast_agent']
+"""
 
+    response = model.generate_content(prompt)
+    return eval(response.text)  # ⚠️ Safe only if you control the output structure
 
+AGENT_FUNCTIONS = {
+    "health_check_agent": health_check_agent,
+    "forecast_agent": forecast_agent,
+    "anomaly_detection_agent": anomaly_detection_agent
+}
 
-from langchain.agents import initialize_agent, AgentType
-from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain.tools import Tool
+def run_selected_agents(agent_names):
+    results = {}
+    for name in agent_names:
+        func = AGENT_FUNCTIONS.get(name)
+        if func:
+            results[name] = func()
+    return results
 
-# Initialize Gemini Flash (model='gemini-1.5-flash' or 'gemini-pro' also valid)
-llm = ChatGoogleGenerativeAI(
-    model="gemini-1.5-flash",
-    google_api_key="your-google-api-key",
-    temperature=0.7
-)
+user_prompt = "Tell me the health and future usage of my application"
+available_agents = list(AGENT_FUNCTIONS.keys())
 
-# (Optional) Define tools
-tools = [
-    Tool.from_function(
-        func=lambda x: f"Echo: {x}",
-        name="EchoTool",
-        description="Returns what was said"
-    )
-]
+selected = select_agents_from_prompt(user_prompt, available_agents)
+print("Selected Agents:", selected)
 
-# Initialize agent with Gemini Flash
-agent = initialize_agent(
-    tools=tools,
-    llm=llm,
-    agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
-    verbose=True
-)
-
-# Test it
-response = agent.run("What is the capital of France?")
-print(response)
-
-
-
-
-from langchain.agents import initialize_agent, AgentType
-from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain.tools import Tool
-
-# Initialize Gemini Flash
-llm = ChatGoogleGenerativeAI(
-    model="gemini-1.5-flash",
-    google_api_key="your-google-api-key", # Replace with your actual API key
-    temperature=0.7,
-    client_options={"api_endpoint": "your-organization-base-url"} # <--- Add your base URL here
-)
-
-# (Optional) Define tools
-tools = [
-    Tool.from_function(
-        func=lambda x: f"Echo: {x}",
-        name="EchoTool",
-        description="Returns what was said"
-    )
-]
-
-# Initialize agent with Gemini Flash
-agent = initialize_agent(
-    tools=tools,
-    llm=llm,
-    agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
-    verbose=True
-)
-
-# Test it
-response = agent.run("What is the capital of France?")
-print(response)
+output = run_selected_agents(selected)
+print("Agent Responses:\n", output)
