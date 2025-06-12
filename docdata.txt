@@ -1,3 +1,12 @@
+Given a user’s natural language request, identify the sequence of agents required to fulfill the task. For each agent, return a dictionary with the following keys:
+	•	Agent_Name: Name of the agent to execute
+	•	Execution_Instruction: Either Self or Cascade
+	•	Input_Instruction_Description: A short description of the data or context this agent needs
+	•	Output_Instruction_Description: A short description of what this agent will return
+
+Return only a Python list of dictionaries. Do not explain anything. Be precise and structured.
+
+
 Given a user’s natural language request, identify the list of agents to be executed in sequence. For each agent, return:
 	1.	Agent_Name: the agent to be invoked,
 	2.	Execution_Instruction: either Self (standalone) or Cascade (runs based on another agent’s result),
