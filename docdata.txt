@@ -1,3 +1,6 @@
+Given a user’s natural language prompt, identify the agents to be executed and whether each agent is to be run independently (Self) or based on the result of another agent (Cascade). Return the result as a list of dictionaries with keys: Agent_Name and Execution_Instruction. Do not explain—just return the list.
+
+
 def health_check_agent():
     return "Health: 3 servers overutilized, 1 underutilized."
 
