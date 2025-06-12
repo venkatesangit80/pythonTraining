@@ -1,3 +1,10 @@
+Given a user’s natural language request, identify the list of agents to be executed in sequence. For each agent, return:
+	1.	Agent_Name: the agent to be invoked,
+	2.	Execution_Instruction: either Self (standalone) or Cascade (runs based on another agent’s result),
+	3.	Instruction_Description: a short, actionable instruction that the agent must perform based on the user’s prompt.
+
+Return only a Python list of dictionaries. Do not explain or add extra text.
+
 Given a user’s natural language prompt, identify the agents to be executed and whether each agent is to be run independently (Self) or based on the result of another agent (Cascade). Return the result as a list of dictionaries with keys: Agent_Name and Execution_Instruction. Do not explain—just return the list.
 
 
