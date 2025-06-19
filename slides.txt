@@ -1,0 +1,65 @@
+Certainly! Here’s the full slide content in text format, structured for easy copy-paste into your own PowerPoint or Google Slides:
+
+⸻
+
+Slide 1: India Team Initiatives
+
+Title: India Team Initiatives
+Subtitle: Overview of Strategic Contributions and Resources
+
+⸻
+
+Slide 2: Platform-Level Capacity Views
+
+Title: 1. Platform-Level Capacity Views
+Content:
+	•	Integrated OCP, Redis, Kafka, Azure into our platform
+	•	Extended capacity views to application level for On-Prem, TAS, TKGI, Database, Storage, and Network
+	•	Enhances visibility and proactive planning for capacity needs
+	•	Resources: 5 engineers from Bangalore, 3 from Hyderabad
+
+⸻
+
+Slide 3: Metric-Level Capacity Insights
+
+Title: 2. Metric-Level Capacity Insights
+Content:
+	•	On-Prem metrics expanded to include Disk and NIC, beyond CPU and Memory
+	•	Cloud platforms enhanced with CPU and Memory metrics
+	•	Enables detection of over/under-utilization and future headroom forecasting
+	•	Resources: 4 engineers from Bangalore, 2 from Hyderabad
+
+⸻
+
+Slide 4: OCP Production Migration
+
+Title: 3. OCP Production Migration
+Content:
+	•	Supporting modernization through strategic migration to OCP
+	•	Development environment migration completed
+	•	UAT and Production migrations in parallel progress
+	•	Resources: 3 engineers from Hyderabad
+
+⸻
+
+Slide 5: DTI Collaboration – AI Algorithms
+
+Title: 4. DTI Collaboration – AI Algorithms
+Content:
+	•	Partnering with DTI to implement cutting-edge time-series prediction models
+	•	Focus on anomaly detection and proactive capacity planning
+	•	Resources: 2 engineers from Bangalore
+
+⸻
+
+Slide 6: GenAI – Hybrid Multi-Agent Chatbot
+
+Title: 5. GenAI – Hybrid Multi-Agent Chatbot
+Content:
+	•	Developing a Gemini-powered GenAI chatbot with multi-agent architecture
+	•	Enhances observability, capacity analysis, and user interaction
+	•	Resources: 3 engineers from Bangalore, 1 from Hyderabad
+
+⸻
+
+Let me know if you’d like a final summary slide or a visual team org structure added.
