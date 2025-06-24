@@ -1,63 +1,19 @@
-Given a user’s natural language request, identify the sequence of agents required to fulfill the task. For each agent, return a dictionary with the following keys:
-	•	Agent_Name: Name of the agent to execute
-	•	Execution_Instruction: Either Self or Cascade
-	•	Input_Instruction_Description: A short description of the data or context this agent needs
-	•	Output_Instruction_Description: A short description of what this agent will return
+You are a precise information extractor.
 
-Return only a Python list of dictionaries. Do not explain anything. Be precise and structured.
+Given a user query, extract the names of all mentioned servers. Return the list of server names as a valid Python list of strings.
 
+Only include items that follow typical server naming patterns like 'srv1', 'server03', 'db-node1', etc.
 
-Given a user’s natural language request, identify the list of agents to be executed in sequence. For each agent, return:
-	1.	Agent_Name: the agent to be invoked,
-	2.	Execution_Instruction: either Self (standalone) or Cascade (runs based on another agent’s result),
-	3.	Instruction_Description: a short, actionable instruction that the agent must perform based on the user’s prompt.
+Do NOT include explanations or extra text. Return only the list.
 
-Return only a Python list of dictionaries. Do not explain or add extra text.
+Example:
+Input: "Check the health of servers srv1, srv2, and srv3."
+Output: ["srv1", "srv2", "srv3"]
 
-Given a user’s natural language prompt, identify the agents to be executed and whether each agent is to be run independently (Self) or based on the result of another agent (Cascade). Return the result as a list of dictionaries with keys: Agent_Name and Execution_Instruction. Do not explain—just return the list.
+Input: "Get metrics for db-node1 and api-node2."
+Output: ["db-node1", "api-node2"]
 
+Input: "How is the system doing?"
+Output: []
 
-def health_check_agent():
-    return "Health: 3 servers overutilized, 1 underutilized."
-
-def forecast_agent():
-    return "Forecast: CPU load will exceed 80% in next 30 minutes."
-
-def anomaly_detection_agent():
-    return "Anomaly Detected: Response time spike in App3."
-
-def select_agents_from_prompt(user_prompt, agent_list):
-    prompt = f"""
-You are an agent selector. Available agents are:
-{', '.join(agent_list)}.
-
-User has asked: "{user_prompt}"
-
-Return a Python list of agents to execute. Only include agent names from the list above. Example: ['health_check_agent', 'forecast_agent']
-"""
-
-    response = model.generate_content(prompt)
-    return eval(response.text)  # ⚠️ Safe only if you control the output structure
-
-AGENT_FUNCTIONS = {
-    "health_check_agent": health_check_agent,
-    "forecast_agent": forecast_agent,
-    "anomaly_detection_agent": anomaly_detection_agent
-}
-
-def run_selected_agents(agent_names):
-    results = {}
-    for name in agent_names:
-        func = AGENT_FUNCTIONS.get(name)
-        if func:
-            results[name] = func()
-    return results
-
-user_prompt = "Tell me the health and future usage of my application"
-available_agents = list(AGENT_FUNCTIONS.keys())
-
-selected = select_agents_from_prompt(user_prompt, available_agents)
-print("Selected Agents:", selected)
-
-output = run_selected_agents(selected)
-print("Agent Responses:\n", output)
+User input: "{user_prompt}"
