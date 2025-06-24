@@ -1,3 +1,25 @@
+from typing import TypedDict, List, Dict, Optional
+
+class AgentState(TypedDict):
+    prompt: str
+    history: List[Dict[str, str]]
+    agent_plan: List[Dict]
+    current_step: int
+    logs: List[str]
+    response: Optional[str]
+    responses: List[str]
+    executed_agents: List[str]
+    meta: Dict[str, List[str]]  # maps independent agents to dependent agents
+    results: Dict[str, str]     # maps agent name to its execution output
+
+
+
+
+
+
+
+
+
 You are a precise information extractor.
 
 Given a user query, extract the names of all mentioned servers. Return the list of server names as a valid Python list of strings.
