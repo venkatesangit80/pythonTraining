@@ -1,91 +1,40 @@
-import google.generativeai as genai
-import os
+import requests
+from bs4 import BeautifulSoup
 import json
-from typing import List, Dict, Tuple
 
-# Initialize Gemini model
-GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
-genai.configure(api_key=GOOGLE_API_KEY)
-model = genai.GenerativeModel("gemini-1.5-flash")
+GITHUB_RAW_URL = "https://raw.githubusercontent.com/samber/awesome-prometheus-alerts/master/rules.json"
 
-# Descriptions used in prompt planning
-AGENT_DESCRIPTIONS = {
-    "health": "Check over and under utilized servers.",
-    "forecast": "Predict resource usage trends.",
-    "recommendation": "Recommend actions based on current and future health."
-}
+OUTPUT_JSON = "prometheus_kb_consolidated.json"
+OUTPUT_MD = "prometheus_kb_consolidated.md"
 
-def generate_agent_plan(user_prompt: str, history: List[Dict]) -> Tuple[List[Dict], Dict[str, List[str]], Dict[str, str]]:
-    """
-    Use Gemini to generate a structured plan of agents to run based on prompt and conversation history.
-    Returns the plan, meta mapping, and initial empty results dict.
-    """
-    history_text = "\n".join([f"{m['role']}: {m['content']}" for m in history])
+print("Downloading Prometheus rules from samber/awesome-prometheus-alerts...")
+response = requests.get(GITHUB_RAW_URL)
 
-    system_prompt = f"""
-You are an agent planner.
+if response.status_code != 200:
+    raise Exception("Failed to fetch rules.json from GitHub")
 
-Your task is to determine the next set of agents to execute based on the full conversation context — not just the latest user input.
+data = response.json()
 
-Review any agent responses or summaries:
+# Save JSON
+with open(OUTPUT_JSON, "w") as f:
+    json.dump(data, f, indent=2)
 
-The available agents and their purposes are:
-{json.dumps(AGENT_DESCRIPTIONS, indent=2)}
+# Create Markdown version
+with open(OUTPUT_MD, "w") as f:
+    f.write("# 📊 Prometheus Knowledge Base\n")
+    f.write("Auto-generated from samber/awesome-prometheus-alerts\n\n")
 
-Return a Python dictionary with the following keys:
-- "plan": a list of agent contracts. Each contract should include:
-    - agent name
-    - description (from above, or override it using the user’s context if relevant)
-    - input_value (e.g., 'APP1' or previous agent name if dependent)
-    - input_instruction
-    - output_instruction
-    - action_type: 'independent' or 'dependent'
+    for group in data:
+        category = group.get("alert") or "Unknown Category"
+        f.write(f"## 🔹 {category}\n\n")
 
-    For each agent in the plan:
-    - You may override the default description based on the user prompt or conversation if it adds clarity or context.
-    - If the default description is sufficient, retain it from the list above.
+        for rule in group.get("rules", []):
+            name = rule.get("alert", "Unnamed")
+            expr = rule.get("expr", "")
+            desc = rule.get("description", "")
+            f.write(f"### {name}\n")
+            f.write(f"**Query:**\n```promql\n{expr}\n```\n")
+            if desc:
+                f.write(f"**Description:** {desc}\n\n")
 
-- "meta": a dictionary mapping each independent agent to its dependent agents
-- "results": a dictionary pre-populated with independent agent keys and empty string values
-
-If the user's input is a greeting, thanks, or unrelated to monitoring, return:
-{{ "plan": [], "meta": {{}}, "results": {{}} }}
-
-Respond ONLY with a Python dictionary in the specified format.
-
-Example:
-{{
-  "plan": [
-    {{
-      "agent": "health",
-      "description": "Analyze server load for east region.",
-      "input_value": "APP1",
-      "input_instruction": "Analyze server load",
-      "output_instruction": "Return list of high-CPU servers",
-      "action_type": "independent"
-    }},
-    {{
-      "agent": "forecast",
-      "description": "Predict usage spikes based on recent server data.",
-      "input_value": "health",
-      "input_instruction": "Use health output to forecast future spikes",
-      "output_instruction": "Return predicted CPU usage",
-      "action_type": "dependent"
-    }}
-  ],
-  "meta": {{
-    "health": ["forecast"]
-  }},
-  "results": {{
-    "health": ""
-  }}
-}}
-"""
-
-    prompt = f"{system_prompt}\n\nConversation so far:\n{history_text}\n\nUser query: \"{user_prompt}\"\n"
-    response = model.generate_content(prompt)
-    try:
-        parsed = json.loads(response.text)
-        return parsed["plan"], parsed.get("meta", {}), parsed.get("results", {})
-    except Exception as e:
-        raise ValueError(f"Failed to parse agent planning output: {e}\nRaw response: {response.text}")
+print(f"✅ Done. Files saved as:\n- {OUTPUT_JSON}\n- {OUTPUT_MD}")
