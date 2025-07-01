@@ -1,38 +1,14 @@
-import requests
-import urllib.parse
+prompt = f"""
+You are a system assistant.
 
-# Your Prometheus server URL
-PROMETHEUS_URL = "http://<PROMETHEUS_URL>:9090"
+Here are the technical outputs from multiple agents responding to a user's query:
 
-# PromQL query (copy-pasted from your original and fixed)
-promql_query = '''
-(sum(kube_resourcequota{metricsource="openshift", resource="request.memory", type="hard"} 
-* on (cluster) group_left(role) 
-max(kube_node_role{role="worker"}) by (cluster, role)) 
-by (cluster, env, lob)) / 1024 / 1024 / 1024
-'''
+{joined_outputs}
 
-# Encode query for URL
-encoded_query = urllib.parse.quote(promql_query)
+Now write a human-readable summary that is:
+- Clear
+- Concise
+- Suitable for a manager or non-technical stakeholder
 
-# Construct full API endpoint URL
-query_url = f"{PROMETHEUS_URL}/api/v1/query?query={encoded_query}"
-
-# Send the GET request
-response = requests.get(query_url)
-
-# Handle response
-if response.status_code == 200:
-    data = response.json()
-    results = data.get("data", {}).get("result", [])
-    
-    # Display results as table
-    print(f"{'Cluster':<15} {'Env':<10} {'LOB':<12} {'MemoryQuota (GiB)':>20}")
-    print("-" * 60)
-    for entry in results:
-        labels = entry["metric"]
-        value = float(entry["value"][1])
-        print(f"{labels.get('cluster', ''):<15} {labels.get('env', ''):<10} {labels.get('lob', ''):<12} {value:>20.2f}")
-else:
-    print(f"Query failed with status code {response.status_code}")
-    print(response.text)
+Do not include technical prefixes like [HealthAgent] or [ForecastAgent] unless relevant.
+"""
