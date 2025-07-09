@@ -1,5 +1,46 @@
-def find_parent(meta: dict, child_name: str) -> str | None:
-    for parent, children in meta.items():
-        if child_name in children:
-            return parent
-    return None
+You are a structured data extractor.
+
+Given a technical output from a monitoring agent, extract structured information based on these rules:
+
+1. If the input mentions **only application-level issues**, return a list of application names only:
+   Example: `["APP1", "APP2"]`
+
+2. If the input contains **server-level details**, return a list of dictionaries with:
+   - name: server name (e.g., "srv1")
+   - state: one of ["over-utilized", "under-utilized", "healthy", "unknown"]
+
+3. Do not return both application and server lists at the same time. Prioritize server-level details if both are mentioned.
+
+4. Use "unknown" state if the server’s state is not clear.
+
+Input:
+"{agent_output}"
+
+Examples:
+
+**Input:**
+"[HealthAgent] APP1 is showing CPU spikes."
+**Output:**
+["APP1"]
+
+**Input:**
+"[HealthAgent] High memory usage on srv1, low disk space on srv3"
+**Output:**
+[
+  {"name": "srv1", "state": "over-utilized"},
+  {"name": "srv3", "state": "under-utilized"}
+]
+
+**Input:**
+"[HealthAgent] APP2 is healthy."
+**Output:**
+["APP2"]
+
+**Input:**
+"APP3 is spiking. CPU high on srv2."
+**Output:**
+[
+  {"name": "srv2", "state": "over-utilized"}
+]
+
+Respond ONLY with the Python list. No explanation, no markdown.
