@@ -1,40 +1,5 @@
-import requests
-from bs4 import BeautifulSoup
-import json
-
-GITHUB_RAW_URL = "https://raw.githubusercontent.com/samber/awesome-prometheus-alerts/master/rules.json"
-
-OUTPUT_JSON = "prometheus_kb_consolidated.json"
-OUTPUT_MD = "prometheus_kb_consolidated.md"
-
-print("Downloading Prometheus rules from samber/awesome-prometheus-alerts...")
-response = requests.get(GITHUB_RAW_URL)
-
-if response.status_code != 200:
-    raise Exception("Failed to fetch rules.json from GitHub")
-
-data = response.json()
-
-# Save JSON
-with open(OUTPUT_JSON, "w") as f:
-    json.dump(data, f, indent=2)
-
-# Create Markdown version
-with open(OUTPUT_MD, "w") as f:
-    f.write("# 📊 Prometheus Knowledge Base\n")
-    f.write("Auto-generated from samber/awesome-prometheus-alerts\n\n")
-
-    for group in data:
-        category = group.get("alert") or "Unknown Category"
-        f.write(f"## 🔹 {category}\n\n")
-
-        for rule in group.get("rules", []):
-            name = rule.get("alert", "Unnamed")
-            expr = rule.get("expr", "")
-            desc = rule.get("description", "")
-            f.write(f"### {name}\n")
-            f.write(f"**Query:**\n```promql\n{expr}\n```\n")
-            if desc:
-                f.write(f"**Description:** {desc}\n\n")
-
-print(f"✅ Done. Files saved as:\n- {OUTPUT_JSON}\n- {OUTPUT_MD}")
+def find_parent(meta: dict, child_name: str) -> str | None:
+    for parent, children in meta.items():
+        if child_name in children:
+            return parent
+    return None
