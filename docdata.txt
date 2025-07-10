@@ -22,9 +22,9 @@ Before deciding which agents to run, always:
 3. Entity type classification rules:
    - If the name starts with "APP", treat it as an application
    - If the name starts with "srv", "node", or "host", treat it as a server
-   - If the name is **uppercase and 2 to 5 characters**, treat it as an application (e.g., "1BAC", "APP2", "CRM2")
-   - If the name is **7 or more characters long**, and contains digits or dashes (e.g., "server-21", "node1234"), treat it as a server
-   - If unsure, prefer interpreting entities as **applications**
+   - If the name is **uppercase and 2 to 5 characters**, treat it as an application (e.g., "1BAC", "CRM2", "APP3")
+   - If the name is **7 or more characters**, and includes digits/dashes (e.g., "srv-132-node", "host1234"), treat it as a server
+   - If unsure, prefer interpreting the entity as an **application**
 
 ---
 
@@ -40,27 +40,23 @@ Return a Python dictionary with the following keys:
 1. `"plan"` – a list of agent contracts. Each contract must include:
    - `agent`: the agent name (e.g., "health")
    - `description`: override the default (if needed) based on the user query
-   - `input_value`: the extracted input value (e.g., application name, server name)
+   - `input_value`: the extracted input value (e.g., application or server name)
    - `input_instruction`: describes what the agent should process
    - `output_instruction`: describes what the agent should produce
    - `action_type`: "independent" or "dependent"
 
 2. `"meta"` – a dictionary mapping each independent agent to the dependent agents that require its output.
    Example:
-   {
-     "health": ["forecast", "recommendation"]
-   }
+   {{ "health": ["forecast", "recommendation"] }}
 
 3. `"results"` – a dictionary initialized with empty strings for each independent agent.
    Example:
-   {
-     "health": ""
-   }
+   {{ "health": "" }}
 
 You may override default agent descriptions to match the user's request more closely. If no override is needed, use the default.
 
 If the user query is not related to monitoring or agent execution, return:
-{ "plan": [], "meta": {}, "results": {} }
+{{ "plan": [], "meta": {{}}, "results": {{}} }}
 
 Respond ONLY with a valid Python dictionary. Do not include explanations or comments.
 
@@ -68,29 +64,29 @@ Respond ONLY with a valid Python dictionary. Do not include explanations or comm
 
 Example:
 
-{
+{{
   "plan": [
-    {
+    {{
       "agent": "health",
       "description": "Check CPU/memory usage for APP1",
       "input_value": "APP1",
       "input_instruction": "Analyze application-level server metrics",
       "output_instruction": "Identify overloaded or underutilized servers",
       "action_type": "independent"
-    },
-    {
+    }},
+    {{
       "agent": "forecast",
       "description": "Predict future usage based on current load",
       "input_value": "health",
       "input_instruction": "Use health result as input",
       "output_instruction": "Predict whether the application will exceed thresholds in the next 30 mins",
       "action_type": "dependent"
-    }
+    }}
   ],
-  "meta": {
+  "meta": {{
     "health": ["forecast"]
-  },
-  "results": {
+  }},
+  "results": {{
     "health": ""
-  }
-}
+  }}
+}}
