@@ -7,3 +7,11 @@ topk(1, max by (namespace, label_app_id) (
   kube_namespace_labels{label_app_id!=""}
 ))
 / 1024 / 1024 / 1024
+
+
+
+
+sum(
+  kube_pod_container_resource_requests{resource="memory", metricsource="openshift", namespace="ns1", cluster="cl1", env="env1", lob="LOB_X"}
+)
+/ 1024 / 1024 / 1024
