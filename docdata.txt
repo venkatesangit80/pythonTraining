@@ -1,14 +1,9 @@
-sum by (cluster, env, lob, namespace, label_app_id) (
-  kube_pod_container_resource_requests{
-    resource="memory",
-    metricsource="openshift"
-  }
+sum by (cluster, env, lob, namespace, pod, label_app_id) (
+  kube_pod_container_resource_requests{resource="memory", metricsource="openshift"}
 )
-* on (namespace) group_left(label_app_id)
-max by (namespace, label_app_id) (
-  kube_namespace_labels{
-    label_app_id!="",
-    metricsource="openshift"
-  }
-) 
+*
+on (namespace) group_left(label_app_id)
+topk(1, max by (namespace, label_app_id) (
+  kube_namespace_labels{label_app_id!=""}
+))
 / 1024 / 1024 / 1024
