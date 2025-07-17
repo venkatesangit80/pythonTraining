@@ -1,17 +1,46 @@
-sum by (cluster, env, lob, namespace, pod, label_app_id) (
-  kube_pod_container_resource_requests{resource="memory", metricsource="openshift"}
-)
-*
-on (namespace) group_left(label_app_id)
-topk(1, max by (namespace, label_app_id) (
-  kube_namespace_labels{label_app_id!=""}
-))
-/ 1024 / 1024 / 1024
+AGENT_DESCRIPTIONS = {
+    "inventory": (
+        "Retrieve a complete list of physical and virtual machines, nodes, or pods "
+        "associated with a given application, server, or namespace. "
+        "Also includes key configuration details like instance types, OS, and sizing. "
+        "Use this when the user refers to infrastructure, environment, machine details, "
+        "or asks about 'what's running where'."
+    ),
+
+    "health": (
+        "Check the current health and performance of servers, applications, or environments. "
+        "This includes metrics like CPU usage, memory consumption, I/O rates, and error status. "
+        "Use when the user asks if something is overloaded, slow, broken, or wants to know "
+        "how an application or server is doing right now."
+    ),
+
+    "forecast": (
+        "Predict future behavior or threshold breaches based on recent and historical usage patterns. "
+        "Use this when the user is asking whether an application or server is likely to exceed limits, "
+        "whether it will become slow or unavailable, or asks anything like 'will this break soon', "
+        "'expected load', or 'next 30 minutes/hour/day'."
+    ),
+
+    "recommendation": (
+        "Provide actions or guidance to optimize, scale, or correct system performance. "
+        "Based on inventory, health, or forecast results, recommend steps like scaling up/down, "
+        "moving workloads, or tuning configuration. Trigger this when the user asks 'what should we do', "
+        "'how to fix', 'can we optimize', or 'next step'."
+    ),
+
+    "greetings": (
+        "Respond to greetings or general open-ended questions that do not require technical action. "
+        "Use this when the user says 'hi', 'hello', 'what can you do', or similar onboarding/opening messages. "
+        "This agent introduces the assistant's capabilities in a helpful, friendly way."
+    )
+}
 
 
 
 
-sum(
-  kube_pod_container_resource_requests{resource="memory", metricsource="openshift", namespace="ns1", cluster="cl1", env="env1", lob="LOB_X"}
-)
-/ 1024 / 1024 / 1024
+Each agent description explains:
+- When it should be used (triggering intent)
+- What input it expects (app, server, namespace)
+- What kind of output it provides (infra list, metrics, predictions, suggestions)
+
+Use this to select the right agents in response to the user’s question. Prioritize accuracy over quantity.
