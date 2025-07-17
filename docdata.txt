@@ -44,3 +44,10 @@ Each agent description explains:
 - What kind of output it provides (infra list, metrics, predictions, suggestions)
 
 Use this to select the right agents in response to the user’s question. Prioritize accuracy over quantity.
+
+
+
+
+If the user request clearly specifies a single task (e.g., "provide inventory", "run health check", "give forecast"), return only the matching agent.
+
+Do not include dependent agents unless the user asks for results beyond the primary task.
