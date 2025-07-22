@@ -1,1 +1,74 @@
-df = df[[col for col in desired_order if col in df.columns]]
+session_store.py
+
+from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime
+from sqlalchemy.orm import declarative_base, sessionmaker
+from datetime import datetime
+
+# Use SQLite for now, can switch to Oracle/PostgreSQL later
+DATABASE_URL = "sqlite:///session_store.db"
+engine = create_engine(DATABASE_URL, echo=False)
+
+SessionLocal = sessionmaker(bind=engine)
+Base = declarative_base()
+
+# Define ORM model
+class Message(Base):
+    __tablename__ = "messages"
+    id = Column(Integer, primary_key=True, index=True)
+    session_id = Column(String, index=True)
+    role = Column(String)  # "user" or "assistant"
+    content = Column(Text)
+    timestamp = Column(DateTime, default=datetime.utcnow)
+
+# Create table
+def init_db():
+    Base.metadata.create_all(bind=engine)
+
+write helper
+
+
+def append_message(session_id: str, role: str, content: str):
+    with SessionLocal() as db:
+        msg = Message(session_id=session_id, role=role, content=content)
+        db.add(msg)
+        db.commit()
+
+def get_session_history(session_id: str):
+    with SessionLocal() as db:
+        messages = db.query(Message).filter_by(session_id=session_id).order_by(Message.timestamp).all()
+        return [{"role": m.role, "content": m.content} for m in messages]
+
+
+
+
+
+
+main
+
+
+from session_store import init_db, append_message, get_session_history
+
+init_db()
+
+@app.post("/execute")
+def chat(req: ChatRequest):
+    session_id = req.sessionId
+    user_msg = req.message
+
+    append_message(session_id, "user", user_msg)
+    history = get_session_history(session_id)
+
+    agent_plan = plan_agent_sequence(user_msg, history=history)
+    result = build_and_run_graph(session_id, user_msg, agent_plan)
+
+    final_response = result["response"]
+    append_message(session_id, "assistant", final_response)
+
+    return {"response": final_response, "logs": result["logs"]}
+
+
+
+
+
+
+DATABASE_URL = "oracle+cx_oracle://user:pass@hostname:1521/dbname"
