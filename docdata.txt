@@ -1,56 +1,8 @@
-"layouts": {
-  "health": [
-    {
-      "type": "table",
-      "title": "Health Metrics",
-      "columns": ["Server", "CPU%", "Memory%"],
-      "rows": [["srv1", 92, 68], ["srv2", 88, 75]]
-    }
-  ],
-  "forecast": [
-    {
-      "type": "line_chart",
-      "title": "CPU Forecast",
-      "x_axis": "Time",
-      "y_axis": "CPU%",
-      "series": [
-        {"label": "srv1", "data": [[0, 85], [15, 89], [30, 95]]}
-      ]
-    }
-  ]
-}
+Average Response Time (ART)
+
+The raw average of all transaction response times over a specific time window.
 
 
+Normal Average Response Time (NART)
 
-
-def health_agent(state: AgentState) -> AgentState:
-    input_value = state["agent_plan"][state["current_step"]]["input_value"]
-
-    detected = [("srv1", 92, 68), ("srv2", 88, 75)]
-    summary = f"[HealthAgent] High CPU usage detected on: {', '.join([d[0] for d in detected])}."
-
-    log = f"Health executed for {input_value}"
-
-    return {
-        **state,
-        "current_step": state["current_step"] + 1,
-        "logs": state["logs"] + [log],
-        "response": summary,
-        "responses": state.get("responses", []) + [summary],
-        "executed_agents": state.get("executed_agents", []) + ["health"],
-        "results": {
-            **state.get("results", {}),
-            "health": summary
-        },
-        "layouts": {
-            **state.get("layouts", {}),
-            "health": [
-                {
-                    "type": "table",
-                    "title": f"Health Metrics for {input_value}",
-                    "columns": ["Server", "CPU%", "Memory%"],
-                    "rows": detected
-                }
-            ]
-        }
-    }
+The average response time excluding slow, very slow, and error transactions. It focuses only on “normal” transactions as defined by AppDynamics baselines.
