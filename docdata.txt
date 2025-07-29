@@ -1,6 +1,6 @@
 sum by(cluster, env, lob, namespace, label_app_id)(
   kube_pod_container_resource_requests{resource="memory", metricsource="openshift"}
-  * on(namespace) group_left(label_app_id)
+  * on(namespace, cluster) group_left(label_app_id)
   max without(job, instance, metricsource, __name__) (
     kube_namespace_labels{label_app_id!=""}
   )
