@@ -1,8 +1,7 @@
-Average Response Time (ART)
-
-The raw average of all transaction response times over a specific time window.
-
-
-Normal Average Response Time (NART)
-
-The average response time excluding slow, very slow, and error transactions. It focuses only on “normal” transactions as defined by AppDynamics baselines.
+sum by(cluster, env, lob, namespace, label_app_id)(
+  kube_pod_container_resource_requests{resource="memory", metricsource="openshift"}
+  * on(namespace) group_left(label_app_id)
+  max without(job, instance, metricsource, __name__) (
+    kube_namespace_labels{label_app_id!=""}
+  )
+) / 1024 / 1024 / 1024
