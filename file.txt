@@ -1,3 +1,5 @@
+protoc --proto_path=. --python_out=. types.proto
+
 It looks like there was a temporary network error on my end while trying to fetch remote.proto from GitHub — so I wasn’t able to compile and attach the remote_pb2.py file directly.
 
 But don’t worry — you can generate it locally in less than a minute using these steps on Windows (or macOS/Linux):
