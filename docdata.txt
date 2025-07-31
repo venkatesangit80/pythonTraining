@@ -1,15 +1,29 @@
-from prometheus_remote_write import RemoteWriteClient, GaugeMetric
+import time
+import snappy
+import requests
+import remote_pb2  # your generated file
 
-client = RemoteWriteClient(url='https://<mimir-host>/api/prom/push', headers={
-    'X-Scope-OrgID': 'default',  # or your tenant
-    'Authorization': 'Bearer <token>'  # if needed
-})
+write_request = remote_pb2.WriteRequest()
+ts = write_request.timeseries.add()
+ts.labels.add(name="__name__", value="vrops_cpu_usage_percent")
+ts.labels.add(name="vm_name", value="vm123")
+ts.labels.add(name="cluster", value="prod")
+ts.samples.add(value=87.5, timestamp=int(time.time() * 1000))
 
-for metric in metrics:
-    g = GaugeMetric(
-        name=metric['name'],
-        value=metric['value'],
-        timestamp=metric['timestamp'],
-        labels=metric['labels']
-    )
-    client.write([g])
+payload = write_request.SerializeToString()
+compressed = snappy.compress(payload)
+
+headers = {
+    "Content-Encoding": "snappy",
+    "Content-Type": "application/x-protobuf",
+    "X-Prometheus-Remote-Write-Version": "0.1.0",
+    "X-Scope-OrgID": "your-tenant"  # required if Mimir is multi-tenant
+}
+
+response = requests.post(
+    url="https://<your-mimir-url>/api/prom/push",
+    data=compressed,
+    headers=headers
+)
+
+print(response.status_code, response.text)
