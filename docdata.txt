@@ -1,7 +1,15 @@
-sum by(cluster, env, lob, namespace, label_app_id)(
-  kube_pod_container_resource_requests{resource="memory", metricsource="openshift"}
-  * on(namespace, cluster) group_left(label_app_id)
-  max without(job, instance, metricsource, __name__) (
-    kube_namespace_labels{label_app_id!=""}
-  )
-) / 1024 / 1024 / 1024
+from prometheus_remote_write import RemoteWriteClient, GaugeMetric
+
+client = RemoteWriteClient(url='https://<mimir-host>/api/prom/push', headers={
+    'X-Scope-OrgID': 'default',  # or your tenant
+    'Authorization': 'Bearer <token>'  # if needed
+})
+
+for metric in metrics:
+    g = GaugeMetric(
+        name=metric['name'],
+        value=metric['value'],
+        timestamp=metric['timestamp'],
+        labels=metric['labels']
+    )
+    client.write([g])
