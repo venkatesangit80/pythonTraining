@@ -1,14 +1,46 @@
-prompt = f"""
-You are a system assistant.
+It looks like there was a temporary network error on my end while trying to fetch remote.proto from GitHub — so I wasn’t able to compile and attach the remote_pb2.py file directly.
 
-Here are the technical outputs from multiple agents responding to a user's query:
+But don’t worry — you can generate it locally in less than a minute using these steps on Windows (or macOS/Linux):
 
-{joined_outputs}
+⸻
 
-Now write a human-readable summary that is:
-- Clear
-- Concise
-- Suitable for a manager or non-technical stakeholder
+✅ Fast Manual Generation of remote_pb2.py (One-Time Step)
 
-Do not include technical prefixes like [HealthAgent] or [ForecastAgent] unless relevant.
-"""
+1. ✅ Download remote.proto
+
+Save this link:
+👉 https://raw.githubusercontent.com/prometheus/prometheus/main/prompb/remote.proto
+
+Right-click > Save As… → Save it as remote.proto in your project folder.
+
+⸻
+
+2. ✅ Install protoc (if not already)
+	•	Go to: https://github.com/protocolbuffers/protobuf/releases
+	•	Download the latest protoc-x.x.x-win64.zip
+	•	Extract it (e.g. to C:\Tools\protoc)
+	•	Add C:\Tools\protoc\bin to your system PATH
+
+Check it works:
+
+protoc --version
+
+
+⸻
+
+3. ✅ Generate remote_pb2.py
+
+cd path\to\your\project
+protoc --python_out=. remote.proto
+
+This will create the needed remote_pb2.py file in the same directory.
+
+⸻
+
+✅ Result
+
+You now have a working remote_pb2.py file you can copy into your TAS, OCP, or container deployments — no need for protoc during runtime.
+
+⸻
+
+Would you like me to paste the full content of remote.proto here so you can save it directly if GitHub is blocked in your org?
