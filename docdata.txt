@@ -1,29 +1,64 @@
 import time
 import snappy
 import requests
-import remote_pb2  # your generated file
+import remote_pb2
+import types_pb2
 
+# Initialize the WriteRequest
 write_request = remote_pb2.WriteRequest()
-ts = write_request.timeseries.add()
-ts.labels.add(name="__name__", value="vrops_cpu_usage_percent")
-ts.labels.add(name="vm_name", value="vm123")
-ts.labels.add(name="cluster", value="prod")
-ts.samples.add(value=87.5, timestamp=int(time.time() * 1000))
 
+# Example: list of metric dicts
+metrics = [
+    {
+        "name": "vrops_cpu_usage_percent",
+        "labels": {"vm_name": "vm123", "cluster": "prod"},
+        "value": 87.5
+    },
+    {
+        "name": "vrops_mem_usage_percent",
+        "labels": {"vm_name": "vm456", "cluster": "dev"},
+        "value": 61.2
+    },
+    {
+        "name": "vrops_disk_io",
+        "labels": {"vm_name": "vm789", "cluster": "test"},
+        "value": 1024.0
+    }
+]
+
+# Create multiple TimeSeries and append to the request
+for metric in metrics:
+    ts = write_request.timeseries.add()
+    
+    # Add metric name as __name__ label
+    ts.labels.add(name="__name__", value=metric["name"])
+    
+    # Add other labels
+    for k, v in metric["labels"].items():
+        ts.labels.add(name=k, value=v)
+    
+    # Add sample
+    ts.samples.add(value=metric["value"], timestamp=int(time.time() * 1000))
+
+# Serialize and compress
 payload = write_request.SerializeToString()
 compressed = snappy.compress(payload)
 
+# Headers and request
 headers = {
     "Content-Encoding": "snappy",
     "Content-Type": "application/x-protobuf",
     "X-Prometheus-Remote-Write-Version": "0.1.0",
-    "X-Scope-OrgID": "your-tenant"  # required if Mimir is multi-tenant
+    "X-Scope-OrgID": "your-tenant-id"
 }
 
-response = requests.post(
+session = requests.Session()
+response = session.post(
     url="https://<your-mimir-url>/api/prom/push",
     data=compressed,
-    headers=headers
+    headers=headers,
+    verify=True  # or False if using self-signed cert
 )
 
-print(response.status_code, response.text)
+print(f"Status Code: {response.status_code}")
+print(response.text)
