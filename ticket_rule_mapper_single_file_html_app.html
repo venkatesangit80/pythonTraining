@@ -1,0 +1,347 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ticket Rule Mapper · HTML</title>
+  <style>
+    :root { --bg:#0b1220; --panel:#121a2b; --muted:#9fb0d0; --text:#eaf1ff; --accent:#7aa2ff; --accent-2:#49e3b7; --danger:#ff7a7a; }
+    * { box-sizing:border-box; }
+    body { margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; color:var(--text); background:linear-gradient(180deg,#0b1220,#0b1220 40%,#0b1528); }
+    header { padding:20px 24px; border-bottom:1px solid rgba(255,255,255,.06); position:sticky; top:0; backdrop-filter: blur(6px); background:rgba(11,18,32,.6); }
+    h1 { margin:0; font-size:20px; letter-spacing:.2px; }
+    main { max-width:1100px; margin:24px auto; padding:0 16px 64px; }
+    .card { background:var(--panel); border:1px solid rgba(255,255,255,.06); border-radius:16px; padding:18px; box-shadow:0 6px 20px rgba(0,0,0,.25); }
+    .row { display:flex; gap:12px; flex-wrap:wrap; }
+    .row > * { flex:1 1 260px; }
+    label { font-size:12px; color:var(--muted); display:block; margin-bottom:6px; }
+    input[type="text"], select, textarea { width:100%; padding:10px 12px; color:var(--text); background:#0f1726; border:1px solid rgba(255,255,255,.12); border-radius:10px; outline:none; }
+    textarea { min-height:64px; resize:vertical; }
+    input[type="file"] { color:var(--muted); }
+    .btn { display:inline-flex; align-items:center; gap:8px; padding:10px 14px; border-radius:999px; border:1px solid rgba(255,255,255,.12); color:var(--text); background:#0f1726; cursor:pointer; text-decoration:none; }
+    .btn.primary { background:linear-gradient(90deg, var(--accent), var(--accent-2)); color:#0a1020; border:0; font-weight:600; }
+    .btn.danger { background:#261214; border-color:#451a1e; color:#ffb3b3; }
+    .btn:disabled { opacity:.6; cursor:not-allowed; }
+    .section { margin-top:20px; }
+    .title { font-size:16px; margin:0 0 8px; font-weight:700; }
+    .sub { color:var(--muted); font-size:13px; margin:0 0 12px; }
+    table { width:100%; border-collapse:collapse; margin-top:8px; }
+    th, td { border-bottom:1px solid rgba(255,255,255,.08); padding:8px 10px; font-size:13px; }
+    th { text-align:left; color:#c9d9ff; position:sticky; top:0; background:#0f1726; }
+    .pill { display:inline-flex; align-items:center; gap:6px; padding:6px 10px; background:#10192b; border:1px solid rgba(255,255,255,.1); border-radius:999px; font-size:12px; }
+    .rule { display:flex; gap:10px; align-items:center; background:#0f1726; border:1px dashed rgba(255,255,255,.15); padding:10px 12px; border-radius:12px; }
+    .rules { display:grid; gap:10px; }
+    .muted { color:var(--muted); }
+    .hint { font-size:12px; color:var(--muted); }
+    .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    @media (max-width: 800px){ .grid-2 { grid-template-columns:1fr; } }
+    .footer { margin-top:24px; display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+    .counter { font-size:12px; color:var(--muted); }
+    .tag { font-size:11px; color:#a6b8ff; }
+    details summary { cursor:pointer; }
+  </style>
+  <!-- SheetJS for Excel read/write -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.19.3/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+  <header>
+    <h1>🧩 Ticket Rule Mapper · HTML (No Server)</h1>
+  </header>
+  <main>
+    <section class="card">
+      <div class="title">1) Upload Excel</div>
+      <p class="sub">First row will be skipped (assumed metadata). Second row used as headers automatically.</p>
+      <div class="row">
+        <div>
+          <label for="file">Excel file (.xlsx)</label>
+          <input id="file" type="file" accept=".xlsx" />
+        </div>
+        <div>
+          <label for="outcol">Output Column</label>
+          <input id="outcol" type="text" value="MappedCategory" />
+          <div class="hint">New/overwritten column where categories will be written</div>
+        </div>
+      </div>
+      <div class="footer">
+        <button id="btn-load" class="btn">Load & Preview</button>
+        <span id="meta" class="counter"></span>
+      </div>
+      <div id="preview" class="section" hidden>
+        <div class="title">Preview (first 50 rows)</div>
+        <div class="sub">Columns detected: <span id="cols" class="tag"></span></div>
+        <div style="max-height:300px; overflow:auto; border:1px solid rgba(255,255,255,.08); border-radius:12px;">
+          <table id="table"></table>
+        </div>
+      </div>
+    </section>
+
+    <section class="card section">
+      <div class="title">2) Build Rules</div>
+      <p class="sub">Add <b>Keyword</b> rules (contains-any → category) and <b>Mapping</b> rules (exact value → category). Rules run top → bottom; later rules overwrite earlier results.</p>
+
+      <div class="grid-2">
+        <div>
+          <h3 style="margin:0 0 8px;">➕ Keyword Rule</h3>
+          <div class="row">
+            <div>
+              <label>Column</label>
+              <select id="kw-col"></select>
+            </div>
+            <div>
+              <label>Category if match</label>
+              <input id="kw-cat" type="text" value="Safety" />
+            </div>
+          </div>
+          <div class="row">
+            <div style="flex:1 1 100%">
+              <label>Keywords (comma‑separated)</label>
+              <textarea id="kw-words">ASAP, urgent, high priority</textarea>
+            </div>
+          </div>
+          <button id="add-kw" class="btn">Add Keyword Rule</button>
+        </div>
+
+        <div>
+          <h3 style="margin:0 0 8px;">➕ Mapping Rule</h3>
+          <div class="row">
+            <div>
+              <label>Column</label>
+              <select id="map-col"></select>
+            </div>
+          </div>
+          <details open>
+            <summary class="muted">FROM value → TO category</summary>
+            <div id="map-rows"></div>
+            <div class="footer">
+              <button id="add-map-row" class="btn">Add Row</button>
+            </div>
+          </details>
+          <button id="add-map" class="btn">Add Mapping Rule</button>
+        </div>
+      </div>
+
+      <div class="section">
+        <h3 style="margin:0 0 8px;">Current Rules</h3>
+        <div id="rules" class="rules"></div>
+        <div class="footer">
+          <button id="export-rules" class="btn">Export Rules JSON</button>
+          <button id="import-rules" class="btn">Import Rules JSON</button>
+          <input id="import-file" type="file" accept="application/json" hidden />
+        </div>
+      </div>
+    </section>
+
+    <section class="card section">
+      <div class="title">3) Apply & Download</div>
+      <p class="sub">Run rules on all rows and download an updated Excel containing the output column.</p>
+      <div class="footer">
+        <button id="run" class="btn primary">Run & Preview Result</button>
+        <button id="download" class="btn" disabled>Download Updated Excel</button>
+        <span id="hits" class="counter"></span>
+      </div>
+      <div id="result" class="section" hidden>
+        <div class="title">Result Preview (first 50 rows)</div>
+        <div style="max-height:300px; overflow:auto; border:1px solid rgba(255,255,255,.08); border-radius:12px;">
+          <table id="table2"></table>
+        </div>
+      </div>
+    </section>
+  </main>
+
+<script>
+// ===== State =====
+let rawRows = [];    // Array of arrays, after header normalize
+let headers = [];    // String[]
+let rules = [];      // list of { type:"keyword"|"mapping", column, keywords?, category?, map? }
+let updatedRows = []; // after applying rules
+
+// ===== Utilities =====
+const $ = (id) => document.getElementById(id);
+function escapeRegex(s){ return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+function buildTable(el, headers, rows){
+  el.innerHTML = '';
+  const thead = document.createElement('thead');
+  const trh = document.createElement('tr');
+  headers.forEach(h=>{ const th=document.createElement('th'); th.textContent=h; trh.appendChild(th); });
+  thead.appendChild(trh); el.appendChild(thead);
+  const tbody = document.createElement('tbody');
+  rows.forEach(r=>{ const tr=document.createElement('tr'); headers.forEach((h,i)=>{ const td=document.createElement('td'); td.textContent = r[i] ?? ''; tr.appendChild(td); }); tbody.appendChild(tr); });
+  el.appendChild(tbody);
+}
+function setColsInSelects(){
+  const selects = [$('kw-col'), $('map-col')];
+  selects.forEach(sel=>{ sel.innerHTML=''; headers.forEach(h=>{ const o=document.createElement('option'); o.value=o.textContent=h; sel.appendChild(o); }); });
+}
+function addMapRowUI(from='', to=''){
+  const wrap = document.createElement('div');
+  wrap.className = 'row';
+  wrap.innerHTML = `
+    <div><label>FROM</label><input type="text" value="${from}"></div>
+    <div><label>TO</label><input type="text" value="${to}"></div>
+    <div style="flex:0 0 auto; align-self:end;">
+      <button class="btn danger">Remove</button>
+    </div>
+  `;
+  wrap.querySelector('button').onclick = ()=> wrap.remove();
+  $('map-rows').appendChild(wrap);
+}
+function showRules(){
+  const box = $('rules'); box.innerHTML='';
+  if(rules.length===0){ box.innerHTML = `<div class="muted">No rules yet.</div>`; return; }
+  rules.forEach((r, idx)=>{
+    const div = document.createElement('div');
+    div.className='rule';
+    const title = r.type==='keyword' ? `KEYWORD · ${r.column}` : `MAPPING · ${r.column}`;
+    const details = r.type==='keyword' ? 
+      `<span class="muted">keywords:</span> ${(r.keywords||[]).join(', ')} → <b>${r.category||''}</b>` :
+      `<span class="muted">pairs:</span> ${Object.keys(r.map||{}).length} → categories`;
+    div.innerHTML = `
+      <span class="pill">${idx+1}</span>
+      <div style="flex:1;">
+        <div><b>${title}</b></div>
+        <div class="muted" style="font-size:12px;">${details}</div>
+      </div>
+      <div style="display:flex; gap:6px;">
+        <button class="btn" data-act="up">▲</button>
+        <button class="btn" data-act="down">▼</button>
+        <button class="btn danger" data-act="del">Delete</button>
+      </div>`;
+    div.querySelector('[data-act="del"]').onclick = ()=>{ rules.splice(idx,1); showRules(); };
+    div.querySelector('[data-act="up"]').onclick = ()=>{ if(idx>0){ [rules[idx-1], rules[idx]] = [rules[idx], rules[idx-1]]; showRules(); } };
+    div.querySelector('[data-act="down"]').onclick = ()=>{ if(idx<rules.length-1){ [rules[idx+1], rules[idx]] = [rules[idx], rules[idx+1]]; showRules(); } };
+    box.appendChild(div);
+  });
+}
+
+// ===== Excel Handling =====
+async function loadExcel(file){
+  const buf = await file.arrayBuffer();
+  const wb = XLSX.read(buf, { type:'array' });
+  const sheet = wb.Sheets[wb.SheetNames[0]];
+  // read as AoA (array of arrays) with no header interpretation
+  const aoa = XLSX.utils.sheet_to_json(sheet, { header:1, raw:true, defval:'' });
+  if(aoa.length <= 2){ throw new Error('Not enough rows after skipping first row.'); }
+  // skip first row, then use the next row as headers
+  const afterSkip = aoa.slice(1);
+  headers = afterSkip[0].map(v=> String(v||''));
+  rawRows = afterSkip.slice(1).map(row=> headers.map((_,i)=> row[i] ?? ''));
+}
+
+// ===== Rule Engine =====
+function applyRules(){
+  const outColName = $('outcol').value.trim() || 'MappedCategory';
+  let outHeaders = [...headers];
+  let outIndex = outHeaders.indexOf(outColName);
+  if(outIndex === -1){ outHeaders.push(outColName); outIndex = outHeaders.length - 1; }
+  const res = rawRows.map(r=>{ const row=[...r]; row[outIndex] = row[outIndex] ?? '';
+    rules.forEach(rule=>{
+      const colIdx = headers.indexOf(rule.column);
+      if(colIdx === -1) return;
+      if(rule.type==='keyword'){
+        const txt = String(row[colIdx]||'');
+        const kws = (rule.keywords||[]).filter(Boolean).map(escapeRegex);
+        if(kws.length){
+          const re = new RegExp(kws.join('|'), 'i');
+          if(re.test(txt)) row[outIndex] = rule.category||'';
+        }
+      } else if(rule.type==='mapping'){
+        const m = rule.map||{}; const key = String(row[colIdx]||'');
+        if(Object.prototype.hasOwnProperty.call(m, key)) row[outIndex] = m[key];
+      }
+    });
+    return row; });
+  return { headers: outHeaders, rows: res };
+}
+
+function countHits(result){
+  const outColName = $('outcol').value.trim() || 'MappedCategory';
+  const idx = result.headers.indexOf(outColName);
+  const counts = new Map();
+  result.rows.forEach(r=>{ const v = r[idx] ?? ''; if(v!=='' && v!=null){ counts.set(v, (counts.get(v)||0)+1); } });
+  const parts = Array.from(counts.entries()).map(([k,v])=> `${k}: ${v}`).join(' • ');
+  $('hits').textContent = parts ? `Rule hits → ${parts}` : 'No matches yet.';
+}
+
+// ===== Events =====
+$('btn-load').onclick = async ()=>{
+  const f = $('file').files[0];
+  if(!f){ alert('Choose an .xlsx file first.'); return; }
+  try{
+    await loadExcel(f);
+    $('meta').textContent = `${rawRows.length} rows · ${headers.length} columns`;
+    setColsInSelects();
+    buildTable($('table'), headers, rawRows.slice(0,50));
+    $('cols').textContent = headers.join(', ');
+    $('preview').hidden = false;
+  }catch(e){ alert('Failed to read Excel: '+ e.message); }
+};
+
+$('add-kw').onclick = ()=>{
+  const col = $('kw-col').value; const cat = $('kw-cat').value.trim();
+  const kws = $('kw-words').value.split(',').map(s=>s.trim()).filter(Boolean);
+  if(!col || !cat || kws.length===0){ alert('Please pick a column, enter keywords, and a category.'); return; }
+  rules.push({ type:'keyword', column:col, keywords:kws, category:cat });
+  showRules();
+};
+
+$('add-map-row').onclick = ()=> addMapRowUI();
+// seed some rows
+addMapRowUI('Integration','Integration');
+addMapRowUI('PEP Connect','Integration');
+addMapRowUI('PAC Data Power','Data Power');
+
+$('add-map').onclick = ()=>{
+  const col = $('map-col').value; if(!col){ alert('Pick a column.'); return; }
+  const rows = Array.from($('map-rows').querySelectorAll('.row'));
+  const map = {};
+  rows.forEach(r=>{
+    const ins = r.querySelectorAll('input');
+    const k = (ins[0].value||'').trim(); const v = (ins[1].value||'').trim();
+    if(k) map[k] = v || '';
+  });
+  if(Object.keys(map).length===0){ alert('Add at least one FROM→TO pair.'); return; }
+  rules.push({ type:'mapping', column:col, map });
+  showRules();
+};
+
+$('export-rules').onclick = ()=>{
+  const blob = new Blob([JSON.stringify(rules, null, 2)], {type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='rules.json'; a.click(); URL.revokeObjectURL(a.href);
+};
+$('import-rules').onclick = ()=> $('import-file').click();
+$('import-file').onchange = (e)=>{
+  const f = e.target.files[0]; if(!f) return;
+  const rd = new FileReader(); rd.onload = ()=>{
+    try{ rules = JSON.parse(rd.result); showRules(); }
+    catch(err){ alert('Invalid JSON: '+err.message); }
+  }; rd.readAsText(f);
+};
+
+$('run').onclick = ()=>{
+  if(headers.length===0){ alert('Load an Excel first.'); return; }
+  const res = applyRules();
+  updatedRows = res.rows; // keep for download
+  buildTable($('table2'), res.headers, res.rows.slice(0,50));
+  countHits(res);
+  $('result').hidden = false;
+  $('download').disabled = false;
+};
+
+$('download').onclick = ()=>{
+  if(!updatedRows.length){ alert('Run rules first.'); return; }
+  const outColName = $('outcol').value.trim() || 'MappedCategory';
+  // Construct AoA: header row + data
+  const resHeaders = [...headers];
+  let idx = resHeaders.indexOf(outColName);
+  if(idx === -1){ resHeaders.push(outColName); idx = resHeaders.length-1; }
+  const aoa = [resHeaders, ...updatedRows];
+  // We must re-insert the skipped metadata row placeholder? (Most users don't need it.)
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Mapped');
+  const wbout = XLSX.write(wb, { bookType:'xlsx', type:'array' });
+  const blob = new Blob([wbout], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='tickets_mapped.xlsx'; a.click(); URL.revokeObjectURL(a.href);
+};
+</script>
+</body>
+</html>
