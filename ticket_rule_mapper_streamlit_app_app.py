@@ -1,26 +1,19 @@
 """
-Ticket Rule Mapper – Streamlit App
----------------------------------
-A simple Streamlit UI that:
-1) Accepts an Excel ticket dump (.xlsx)
-2) Skips the first row (metadata) and uses the second row as headers
-3) Lets you define rules:
-   - Keyword Rule: if Column contains any of the given keywords → assign Category
-   - Mapping Rule: if Column value equals one of the map keys → assign mapped Category
-4) Applies rules in order (top to bottom) and writes the chosen output column
-5) Allows downloading the updated Excel file
+Ticket Rule Mapper – Streamlit App (fixed for duplicate/blank headers)
+----------------------------------------------------------------------
+- Skips the first row (metadata), uses the next row as headers
+- Auto-uniquifies headers and fills blanks (e.g., 'A', 'A (2)', 'Unnamed_3')
+- Build Keyword / Mapping rules; apply in order into an output column
+- Download updated Excel
 
 How to run:
-  pip install -r requirements.txt   # or: pip install streamlit pandas openpyxl
+  pip install streamlit pandas openpyxl
   streamlit run app.py
-
-Notes:
-- Rules are stored in st.session_state so you can add many before applying.
-- You can export/import rules as JSON.
 """
 
 import io
 import json
+import re
 from typing import List, Dict, Any
 
 import pandas as pd
@@ -30,26 +23,70 @@ import streamlit as st
 # Helpers
 # ----------------------------
 
-def read_excel_skip_first_row(file) -> pd.DataFrame:
-    """Read an Excel file, skip the first *row* (assumed metadata),
-    and treat the next row as header by re-reading with header=0 after skipping.
+def _make_unique_headers(cols: list) -> list[str]:
     """
-    # We read once to count columns, then re-read properly.
-    # Easiest approach: read all with no header, drop first row, set next row as header.
+    Make headers unique & readable.
+    - Fill blanks with 'Unnamed_{i}'
+    - Strip whitespace
+    - Deduplicate by appending ' (n)'
+    """
+    seen: Dict[str, int] = {}
+    out: list[str] = []
+    for i, c in enumerate(cols, start=1):
+        name = "" if c is None else str(c)
+        name = name.strip()
+        if not name:
+            name = f"Unnamed_{i}"
+        base = name
+        if base in seen:
+            seen[base] += 1
+            name = f"{base} ({seen[base]})"
+        else:
+            seen[base] = 1
+        out.append(name)
+    return out
+
+
+def read_excel_skip_first_row(file) -> pd.DataFrame:
+    """
+    Read Excel, skip the first row (metadata), use the next row as headers,
+    sanitize/uniquify headers to avoid duplicates, then return a clean DataFrame.
+    """
     df_raw = pd.read_excel(file, header=None, engine="openpyxl")
-    if df_raw.empty:
+    if df_raw.empty or len(df_raw) <= 2:
         return pd.DataFrame()
-    if len(df_raw) == 1:
-        # Only one row → after skipping, nothing remains
-        return pd.DataFrame()
-    # Drop the first row (index 0)
-    df = df_raw.iloc[1:].reset_index(drop=True)
-    # Use the (new) first row as header
-    df.columns = df.iloc[0]
-    df = df.iloc[1:].reset_index(drop=True)
-    # Ensure columns are strings
-    df.columns = [str(c) for c in df.columns]
+
+    # Drop the first row (metadata)
+    after_skip = df_raw.iloc[1:].reset_index(drop=True)
+
+    # Row 0 is header row; row 1.. are data
+    header_row = after_skip.iloc[0].tolist()
+    headers = _make_unique_headers(header_row)
+
+    df = after_skip.iloc[1:].reset_index(drop=True)
+    # Align number of columns: clip or pad to header length
+    if df.shape[1] >= len(headers):
+        df = df.iloc[:, :len(headers)]
+    else:
+        # pad missing columns if the header is longer than data columns
+        for _ in range(len(headers) - df.shape[1]):
+            df[df.shape[1]] = None
+    df.columns = headers
+
+    # Optional: report if any renaming happened
+    try:
+        renamed = []
+        for orig, new in zip(header_row, headers):
+            o = "" if orig is None else str(orig).strip()
+            if o != new:
+                renamed.append(f"{o or '<blank>'} → {new}")
+        if renamed:
+            st.info("Adjusted duplicate/blank headers: " + ", ".join(renamed))
+    except Exception:
+        pass
+
     return df
+
 
 # Rule schemas (stored in session_state["rules"]) like:
 # {
@@ -64,7 +101,6 @@ def read_excel_skip_first_row(file) -> pd.DataFrame:
 #   "column": "Resolution Type",
 #   "map": {"Integration":"Integration", "PEP Connect":"Integration"},
 # }
-
 
 def ensure_state():
     if "rules" not in st.session_state:
@@ -110,13 +146,17 @@ def apply_rules(df: pd.DataFrame, rules: List[Dict[str, Any]], output_col: str) 
             cat = rule.get("category", "")
             if not kws or not cat:
                 continue
-            # case-insensitive contains-any
-            mask = out[col].astype(str).str.contains("|".join([pd.regex.escape(k) for k in kws]), case=False, na=False)
+            # case-insensitive contains-any using re.escape (not pd.regex)
+            pattern = "|".join(re.escape(k) for k in kws if k)
+            if not pattern:
+                continue
+            mask = out[col].astype(str).str.contains(pattern, case=False, na=False, regex=True)
             out.loc[mask, output_col] = cat
         elif rtype == "mapping":
             mapping = rule.get("map", {})
             if not mapping:
                 continue
+            # map exact values; preserve existing output when no match
             out[output_col] = out.apply(
                 lambda row: mapping.get(str(row[col]), row[output_col]), axis=1
             )
@@ -145,9 +185,10 @@ with st.expander("⚙️ Settings", expanded=False):
     st.session_state["output_column"] = st.text_input(
         "Output column name (where categories will be written)",
         st.session_state["output_column"],
-        help="This column will be added/overwritten with rule results.")
+        help="This column will be added/overwritten with rule results."
+    )
 
-uploaded = st.file_uploader("Upload Excel (.xlsx) – first row is skipped automatically", type=["xlsx"]) 
+uploaded = st.file_uploader("Upload Excel (.xlsx) – first row is skipped automatically", type=["xlsx"])
 
 if uploaded is not None:
     try:
@@ -170,7 +211,7 @@ if uploaded is not None:
         tab_kw, tab_map, tab_rules = st.tabs(["Keyword Rule", "Mapping Rule", "Current Rules"])
 
         with tab_kw:
-            col_kw1, col_kw2 = st.columns([1,1])
+            col_kw1, col_kw2 = st.columns([1, 1])
             with col_kw1:
                 kw_col = st.selectbox("Column to search keywords in", options=cols, key="kw_col")
             with col_kw2:
@@ -191,12 +232,17 @@ if uploaded is not None:
         with tab_map:
             map_col = st.selectbox("Column to map values from", options=cols, key="map_col")
             st.caption("Enter pairs of FROM value → TO category. Add rows as needed.")
-            # Provide a small editable table for mapping
-            sample = pd.DataFrame({"FROM_value": ["Integration", "PEP Connect", "PAC Data Power"],
-                                   "TO_category": ["Integration", "Integration", "Data Power"]})
+            sample = pd.DataFrame({
+                "FROM_value": ["Integration", "PEP Connect", "PAC Data Power"],
+                "TO_category": ["Integration", "Integration", "Data Power"]
+            })
             edited = st.data_editor(sample, num_rows="dynamic", use_container_width=True, key="map_editor")
             if st.button("➕ Add Mapping Rule"):
-                mapping = {str(row["FROM_value"]): str(row["TO_category"]) for _, row in edited.iterrows() if str(row["FROM_value"]).strip() != ""}
+                mapping = {
+                    str(row["FROM_value"]): str(row["TO_category"])
+                    for _, row in edited.iterrows()
+                    if str(row["FROM_value"]).strip() != ""
+                }
                 if not mapping:
                     st.error("Please specify at least one mapping pair.")
                 else:
@@ -204,18 +250,23 @@ if uploaded is not None:
                     st.success("Mapping rule added.")
 
         with tab_rules:
-            st.write("Rules are applied top → bottom. Drag to reorder using the arrows.")
+            st.write("Rules are applied top → bottom. Use the arrows to reorder.")
             if st.session_state["rules"]:
-                # Show rules as JSON list and allow deletion/reordering
                 for i, r in enumerate(st.session_state["rules"]):
                     with st.expander(f"Rule {i+1}: {r['type'].upper()} on '{r['column']}'", expanded=False):
                         st.code(json.dumps(r, indent=2))
-                        c1, c2, c3 = st.columns([1,1,6])
+                        c1, c2, c3 = st.columns([1, 1, 6])
                         if c1.button("⬆️ Up", key=f"up_{i}") and i > 0:
-                            st.session_state["rules"][i-1], st.session_state["rules"][i] = st.session_state["rules"][i], st.session_state["rules"][i-1]
+                            st.session_state["rules"][i-1], st.session_state["rules"][i] = (
+                                st.session_state["rules"][i],
+                                st.session_state["rules"][i-1],
+                            )
                             st.experimental_rerun()
                         if c2.button("⬇️ Down", key=f"down_{i}") and i < len(st.session_state["rules"]) - 1:
-                            st.session_state["rules"][i+1], st.session_state["rules"][i] = st.session_state["rules"][i], st.session_state["rules"][i+1]
+                            st.session_state["rules"][i+1], st.session_state["rules"][i] = (
+                                st.session_state["rules"][i],
+                                st.session_state["rules"][i+1],
+                            )
                             st.experimental_rerun()
                         if c3.button("🗑️ Delete", key=f"del_{i}"):
                             st.session_state["rules"].pop(i)
@@ -244,7 +295,7 @@ if uploaded is not None:
         st.subheader("🚀 Apply Rules")
         apply_clicked = st.button("Run & Preview")
         if apply_clicked:
-            updated = apply_rules(df, st.session_state["rules"], st.session_state["output_column"]) 
+            updated = apply_rules(df, st.session_state["rules"], st.session_state["output_column"])
             if updated.empty:
                 st.warning("No data to show.")
             else:
