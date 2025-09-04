@@ -39,3 +39,51 @@ GET https://<vrops-host>/suite-api/api/resources/stats?
     &intervalQuantifier=5
 Authorization: vRealizeOpsToken <token>
 
+
+
+
+
+import requests
+import json
+
+# Assume you already have these
+resource_input_list = ["vm-101", "vm-102", "vm-103", "vm-104"]  # your 100 IDs
+metric_keys = ["mem|usage_average", "cpu|usage_average"]
+
+# --- Step 1: Call vROps ---
+url = "https://<vrops-host>/suite-api/api/resources/stats/latest"
+params = {
+    "ids": ",".join(resource_input_list),
+    "keys": ",".join(metric_keys)
+}
+headers = {"Authorization": "vRealizeOpsToken <your-token>"}
+
+resp = requests.get(url, headers=headers, params=params, verify=False)
+resp.raise_for_status()
+data = resp.json()
+
+# --- Step 2: Build resource_output_list from API ---
+resource_output_list = [item["resourceId"] for item in data.get("values", [])]
+
+# --- Step 3: Build prom_payload from response ---
+prom_payload = []
+for item in data.get("values", []):
+    rid = item["resourceId"]
+    row = {"resourceId": rid}
+    for stat in item.get("stat-list", {}).get("stat", []):
+        key = stat.get("statKey")
+        vals = stat.get("data", [])
+        row[key] = vals[-1] if vals else None
+    prom_payload.append(row)
+
+# --- Step 4: Add missing resources with null values ---
+missing_ids = set(resource_input_list) - set(resource_output_list)
+for mid in missing_ids:
+    prom_payload.append({
+        "resourceId": mid,
+        **{k: None for k in metric_keys},
+        "status": "missing"
+    })
+
+# Final JSON ready to remote-write
+print(json.dumps(prom_payload, indent=2))
