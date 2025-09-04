@@ -22,6 +22,10 @@ Authorization: vRealizeOpsToken <token>
 
 GET https://<vrops-host>/suite-api/api/resources/{resourceId}/stats/latest?keys=mem|usage_average
 Authorization: vRealizeOpsToken <token>
+GET https://<vrops-host>/suite-api/api/resources/stats/latest
+      ?ids=<id1>,<id2>,<id3>,...<id100>
+      &keys=mem|usage_average
+&keys=mem|usage_average,cpu|usage_average
 
 	•	Get aggregated stats for last 15 minutes
 
