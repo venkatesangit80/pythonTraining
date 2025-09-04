@@ -1,0 +1,37 @@
+https://<your-vrops-host-or-lb>/suite-api/api
+
+POST https://<vrops-host>/suite-api/api/auth/token/acquire
+Body (JSON):
+{
+  "username": "admin",
+  "password": "yourpass",
+  "tenantName": "local"
+}
+
+	•	List resource kinds
+
+GET https://<vrops-host>/suite-api/api/resourcekinds
+Authorization: vRealizeOpsToken <token>
+
+	•	List resources of a kind
+
+GET https://<vrops-host>/suite-api/api/resources?resourceKind=VirtualMachine&pageSize=100
+Authorization: vRealizeOpsToken <token>
+
+	•	Get latest stats for a resource
+
+GET https://<vrops-host>/suite-api/api/resources/{resourceId}/stats/latest?keys=mem|usage_average
+Authorization: vRealizeOpsToken <token>
+
+	•	Get aggregated stats for last 15 minutes
+
+GET https://<vrops-host>/suite-api/api/resources/stats?
+    ids={resourceId1},{resourceId2}
+    &keys=mem|usage_average,cpu|usage_average
+    &begin=1736034000000
+    &end=1736034900000
+    &rollupType=AVERAGE
+    &intervalType=MINUTES
+    &intervalQuantifier=5
+Authorization: vRealizeOpsToken <token>
+
