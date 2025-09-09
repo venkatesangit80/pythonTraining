@@ -1,89 +1,57 @@
-https://<your-vrops-host-or-lb>/suite-api/api
+Ah, I get what you mean 👍 — you’re thinking: “If it was only memory, the worker would still connect to Redis, register itself, and then later die. So Flower should at least see it briefly.”
 
-POST https://<vrops-host>/suite-api/api/auth/token/acquire
-Body (JSON):
-{
-  "username": "admin",
-  "password": "yourpass",
-  "tenantName": "local"
-}
+That’s a very good intuition. Let’s unpack:
 
-	•	List resource kinds
+⸻
 
-GET https://<vrops-host>/suite-api/api/resourcekinds
-Authorization: vRealizeOpsToken <token>
+🔹 How a Celery worker registers with Flower
+	•	A worker process must fully start → connect to the broker (Redis) → send a hello heartbeat → then Flower lists it.
+	•	If the worker never reaches that point (crashes during startup), Flower will never know it existed.
 
-	•	List resources of a kind
+⸻
 
-GET https://<vrops-host>/suite-api/api/resources?resourceKind=VirtualMachine&pageSize=100
-Authorization: vRealizeOpsToken <token>
+🔹 Why an OOMKilled worker might never show
+	1.	OOM happens before broker handshake
+	•	If your pod limits are too low, Celery may fork multiple worker processes as soon as it starts.
+	•	Each child allocates memory, and the pod is OOMKilled before any worker manages to connect to Redis.
+	•	Result: nothing in Flower.
+	2.	Crash-loop timing
+	•	Even if a worker connects once, if it dies within a few seconds, Flower might miss it unless you’re watching live (workers are removed quickly if no heartbeats arrive).
+	3.	Prefork vs solo pool
+	•	Prefork mode (--pool=prefork) spawns child processes immediately → memory spike → OOM before connect.
+	•	In solo pool (--pool=solo), there’s only one process, so you usually see it in Flower even with tiny memory.
 
-	•	Get latest stats for a resource
+⸻
 
-GET https://<vrops-host>/suite-api/api/resources/{resourceId}/stats/latest?keys=mem|usage_average
-Authorization: vRealizeOpsToken <token>
-GET https://<vrops-host>/suite-api/api/resources/stats/latest
-      ?ids=<id1>,<id2>,<id3>,...<id100>
-      &keys=mem|usage_average
-&keys=mem|usage_average,cpu|usage_average
+🔹 Why this matches your situation
+	•	In TAS, your workers probably had more RAM. Prefork succeeded, so Flower saw them.
+	•	In OCP, the pod limit is tighter. Worker forks N children → pod OOMKilled before Redis handshake. Flower never lists them.
 
-	•	Get aggregated stats for last 15 minutes
+⸻
 
-GET https://<vrops-host>/suite-api/api/resources/stats?
-    ids={resourceId1},{resourceId2}
-    &keys=mem|usage_average,cpu|usage_average
-    &begin=1736034000000
-    &end=1736034900000
-    &rollupType=AVERAGE
-    &intervalType=MINUTES
-    &intervalQuantifier=5
-Authorization: vRealizeOpsToken <token>
+✅ How to prove it
+	1.	Run worker in solo mode in OCP:
 
+celery -A app worker --pool=solo --loglevel=DEBUG
 
+	•	If it shows up in Flower, your issue is pure memory pressure from prefork.
 
+	2.	Set explicit low concurrency:
 
+env:
+- name: CELERYD_CONCURRENCY
+  value: "2"
 
-import requests
-import json
+Then restart. If it appears in Flower, you confirmed OOM was killing before handshake.
 
-# Assume you already have these
-resource_input_list = ["vm-101", "vm-102", "vm-103", "vm-104"]  # your 100 IDs
-metric_keys = ["mem|usage_average", "cpu|usage_average"]
+	3.	Check OCP pod logs with --previous. If you see no Celery/Kombu connection messages, it died before handshake.
 
-# --- Step 1: Call vROps ---
-url = "https://<vrops-host>/suite-api/api/resources/stats/latest"
-params = {
-    "ids": ",".join(resource_input_list),
-    "keys": ",".join(metric_keys)
-}
-headers = {"Authorization": "vRealizeOpsToken <your-token>"}
+⸻
 
-resp = requests.get(url, headers=headers, params=params, verify=False)
-resp.raise_for_status()
-data = resp.json()
+🔹 Bottom line
+	•	Yes, it can be memory alone and still never appear in Flower, if OOM happens before the broker handshake.
+	•	That’s why your OCP pod shows OOMKilled but nothing in Flower.
 
-# --- Step 2: Build resource_output_list from API ---
-resource_output_list = [item["resourceId"] for item in data.get("values", [])]
+⸻
 
-# --- Step 3: Build prom_payload from response ---
-prom_payload = []
-for item in data.get("values", []):
-    rid = item["resourceId"]
-    row = {"resourceId": rid}
-    for stat in item.get("stat-list", {}).get("stat", []):
-        key = stat.get("statKey")
-        vals = stat.get("data", [])
-        row[key] = vals[-1] if vals else None
-    prom_payload.append(row)
-
-# --- Step 4: Add missing resources with null values ---
-missing_ids = set(resource_input_list) - set(resource_output_list)
-for mid in missing_ids:
-    prom_payload.append({
-        "resourceId": mid,
-        **{k: None for k in metric_keys},
-        "status": "missing"
-    })
-
-# Final JSON ready to remote-write
-print(json.dumps(prom_payload, indent=2))
+👉 Do you want me to suggest a safe-start profile (solo pool + concurrency=1, small page size) you can run in OCP just to confirm visibility in Flower before tuning memory back up?
