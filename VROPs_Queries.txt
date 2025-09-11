@@ -1,30 +1,77 @@
-Subject: Request for vROps API Rate Limit & Capacity Review
-Dear [Manager’s Name],
+66 vCPU req / 132–143 vCPU lim; 11/22 GiB mem
 
-As part of our integration with vROps, we are collecting performance statistics (e.g., memory and CPU usage) for all resources and exporting them into Mimir/Prometheus for capacity insights. While our design is working well for small and medium endpoints (in the range of a few thousand resources), we are facing recurring issues with large endpoints (tens of thousands of resources, e.g., VirtualMachines).
 
-Specifically:
-	•	For large endpoints (~80k resources), the API starts returning HTTP 429 (Too Many Requests) after a short period.
-	•	We have already implemented Celery-level retry/backoff logic, but the sustained throughput limit still causes failures.
-	•	For endpoints with fewer resources, the system works smoothly without errors.
 
-To meet our SLA (collecting all data every 5 minutes), we need support from the vROps team in the following areas:
-	1.	API Rate Limits
-	•	Please confirm the current API rate limit configuration for our cluster.
-	•	Can the limit for our service account(s) be increased, or can we be allocated higher quotas for bulk data collection?
-	2.	Cluster Capacity
-	•	Large-volume API usage may require additional analytics/remote collector nodes to handle the load.
-	•	Can the cluster be reviewed for scale-out options so that sustained 80k resource fetches every 5 minutes are supported?
-	3.	Operational Guidance
-	•	Are there VMware best practices or recommended limits for the /stats/latest API with large batches?
-	•	Would creating multiple service accounts for load distribution be acceptable?
-	4.	Alternative Options
-	•	We are also considering sharding large resource kinds into multiple smaller queries (by cluster/datacenter) to reduce per-call volume.
-	•	We’d appreciate guidance from the vROps team if there are preferred ways to filter/scope API calls to balance system stability and completeness.
 
-In summary: The system is proven to work end-to-end, but for large endpoints we need either higher API limits and/or cluster capacity improvements to consistently meet our SLA. Without this, retries alone are insufficient.
+Great—since you already have live numbers from TAS, we can translate them into an OCP plan.
 
-We kindly request the vROps team to review the API quota and infrastructure capacity, and suggest the best approach forward.
+What your TAS metrics imply (per instance)
+	•	CPU: avg ≈ 600% (= ~6 vCPU), peak ≈ 1300% (= ~13 vCPU).
+	•	Mem: limit 1 GiB; only 0.1% tasks show memory issues → you’re close but mostly fine at 1 GiB.
 
-Thank you,
-[Your Name]
+You run 8 threads per instance and want 11 replicas on OCP.
+
+⸻
+
+Straight translation to OCP (same behavior as TAS)
+
+If you keep the same concurrency/work profile per pod:
+
+Per pod
+	•	CPU request: 6 vCPU (covers average)
+	•	CPU limit: 12–13 vCPU (covers peak with a little headroom)
+	•	Mem request: 1 GiB
+	•	Mem limit: 2 GiB (adds safety vs the 0.1% OOMy cases)
+	•	Celery: -c 8, worker_prefetch_multiplier=1, -Ofair, CELERYD_MAX_TASKS_PER_CHILD=500–1000
+
+Cluster totals for 11 pods
+	•	CPU requested ≈ 66 vCPU, CPU limit ≈ 132–143 vCPU
+	•	Mem requested ≈ 11 GiB, Mem limit ≈ 22 GiB
+
+This is the most “apples-to-apples” capacity to expect TAS-like performance.
+
+⸻
+
+If those CPU limits are too high for your cluster
+
+Option A — Reduce per-pod concurrency, add headroom
+	•	Per pod: -c 4, CPU request 3 vCPU, CPU limit 6–7 vCPU, Mem 1 GiB / 2 GiB
+	•	Keep 11 pods → totals ≈ 33 vCPU requested, 66–77 vCPU limit, 11/22 GiB mem
+	•	Throughput drop is often modest if you keep batch size high and avoid prefetch stalls.
+
+Option B — Keep -c 8 but cap limits lower, and shard traffic
+	•	Per pod: CPU request 4 vCPU, CPU limit 8–9 vCPU
+	•	Stagger pages / increase batch size so you don’t push all pods to peak at once.
+
+⸻
+
+Autoscaling + QoS recommendations
+	•	HPA on CPU, target 60–65%:
+	•	Min replicas: 11
+	•	Max replicas: 20 (or whatever your quota allows)
+	•	Requests vs Limits:
+	•	If you want Guaranteed QoS, set requests = limits (but you must ensure the cluster has that capacity).
+	•	Otherwise Burstable: requests at avg (6 vCPU) and limits at peak (12–13 vCPU).
+	•	VPA (recommend “recommendation-only” mode) to learn steady-state CPU/mem and refine requests after a few days.
+	•	Probes: give generous initial delays; Celery workers often spike at start.
+	•	Memory hygiene: keep CELERYD_MAX_TASKS_PER_CHILD and ensure you drop large JSONs post-write.
+
+⸻
+
+Quick capacity table (per pod → 11 pods)
+
+Profile	Concurrency	CPU req	CPU limit	Mem req	Mem limit	Totals (11 pods)
+TAS-match	8	6 vCPU	12–13 vCPU	1 GiB	2 GiB	66 vCPU req / 132–143 vCPU lim; 11/22 GiB mem
+OCP-lean	4	3 vCPU	6–7 vCPU	1 GiB	2 GiB	33 vCPU req / 66–77 vCPU lim; 11/22 GiB mem
+Balanced	6	4–5 vCPU	9–10 vCPU	1 GiB	2 GiB	44–55 vCPU req / 99–110 vCPU lim; 11/22 GiB mem
+
+
+⸻
+
+Final tips to hit SLA without overprovisioning
+	•	Batch bigger per /stats/latest (e.g., 500–1000 IDs) to reduce request count.
+	•	Stagger dispatch of pages over ~60–120s to flatten peaks.
+	•	Keep rate-limit shaping for huge endpoints on a separate queue so they don’t starve the others.
+	•	Verify Prom/Mimir ingestion capacity matches the pod scale (ingester shards, distributor concurrency).
+
+If you tell me the node sizes/quotas available on your OCP cluster, I can pick the most realistic profile and give you a ready-to-apply Deployment/HPA snippet.
