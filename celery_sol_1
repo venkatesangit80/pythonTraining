@@ -1,0 +1,193 @@
+Celery solution
+Got you. Here’s a tight, end-to-end read on what (very likely) happened, plus
+exactly how to fix it next time—both proactively and reactively—without
+bouncing pods.
+What actually happened (most probable
+chain)
+1. Threads + long/blocked work = stuck pool
+You mentioned “17 concurrent threads each.” If your workers use
+pool=threads (or default with --pool=threads), Celery cannot hard-kill
+threads. When your stress run created loads of tasks that time out (≈3 min)
+or hang inside I/O, those threads got stuck. New tasks reached workers
+(“received”) but never entered “started” because all pool workers were
+occupied (or waiting on timeouts that can’t be force-killed in a thread pool).
+2. Prefetch hoarding hid the real backlog
+Default worker_prefetch_multiplier is 4. With ~6 pods × 17 threads = ~102
+concurrency, prefetch 4 means ~408 messages reserved per “full” cluster
+burst. Those reserved tasks disappear from the Redis queue length, so
+queues looked empty, but tasks were “reserved” inside the workers and not
+progressing.
+3. Redis visibility / requeue timing made it feel “never-ending”
+With Redis broker, Celery uses a visibility timeout (often 1 hour by default)
+to requeue unacked messages if a worker dies. If the worker is alive (but
+threads are stuck), messages won’t go back to the queue until visibility
+expires (and even then behavior depends on ack timing). Net effect:
+“received” forever until you restarted pods, which nuked the stuck pool and
+allowed fresh tasks to run.
+Primary root causes to check
+Using pool=threads for tasks that can hang/block or need time limits.
+Threads can’t be hard-terminated. Time limits only work reliably with
+Celery solution 1
+prefork (process) pool.
+High prefetch (default 4) + large concurrency → task hoarding & starvation.
+Mismatched timeouts: task soft/hard time limits, broker visibility_timeout,
+Redis socket timeouts—if misaligned, you can get zombie reservations.
+Acks config: if acks_late/task_acks_on_failure_or_timeout aren’t right for
+your workload, lost workers or timeouts won’t cleanly requeue.
+Worker process recycling not configured: memory/FD leaks during stress
+can quietly degrade pools.
+Broker/connection pool pressure: broker_pool_limit, Redis maxclients, TLS,
+or network hiccups can stall the consumer thread.
+Proactive hardening (recommended
+defaults for prod)
+1) Switch to prefork (process pool) for anything that can block
+celery -A yourapp worker --pool=prefork --concurrency=17 ...
+Or in config:
+worker_pool = "prefork"
+Then set time limits that actually work:
+task_soft_time_limit = 150 # 2.5 min
+task_time_limit = 180 # 3 min hard kill (process-level)
+2) Stop hoarding: set prefetch to 1
+worker_prefetch_multiplier = 1
+This makes execution fair, and what you see in the queue mirrors reality. (You
+can add -Ofair for older setups, but with prefetch=1 it’s effectively fair.)
+3) Align visibility timeout with task hard limit
+broker_transport_options = {
+"visibility_timeout": 240 # > hard time limit (180s) but not huge
+}
+If a worker dies, tasks requeue in a few minutes, not an hour.
+4) Ensure failed/time-limited tasks requeue correctly
+Celery solution 2
+task_acks_on_failure_or_timeout = True
+task_reject_on_worker_lost = True
+acks_late = True
+(Use acks_late only if your tasks are idempotent or you can tolerate re-
+execution.)
+5) Keep workers fresh
+worker_max_tasks_per_child = 100 # or lower under stress
+worker_max_memory_per_child = 400_000 # ~400MB; tune per task profile
+6) Separate lanes
+Put slow/timeout-prone tasks on a dedicated queue with lower
+concurrency.
+Keep fast tasks on their own queue with prefetch=1 so they never get
+starved.
+7) Right-size Redis
+Check maxclients, CPU, and network.
+Set Celery broker pool reasonably:
+broker_pool_limit = 10 # per worker; tune with replica count
+broker_heartbeat = 30
+broker_connection_timeout = 30
+redis_socket_timeout = 30
+Reactive playbook (no pod restarts)
+A. See what’s really stuck
+celery -A yourapp inspect active
+celery -A yourapp inspect reserved
+celery -A yourapp inspect scheduled
+celery -A yourapp inspect stats
+If reserved is huge and active is tiny/flat → pool blocked / prefetch hoarding.
+B. Drain or free the pool without killing the pod
+Celery solution 3
+1. Restart only the pool (keeps the worker process up):
+celery -A yourapp control pool_restart --destination=<worker@hostname>
+This is the safest “unstick” lever in prod when threads/processes are wedged.
+1. Revoke/terminate problematic tasks
+Soft revoke (let code handle cleanup):
+celery -A yourapp control revoke <task_id>
+Hard terminate (prefork only; sends SIGKILL to the child):
+celery -A yourapp control revoke <task_id> --terminate --signal=SIGKILL
+Then verify active drops and reserved drains.
+1. Lower prefetch at runtime (Celery ≥5 allows QoS changes)
+celery -A yourapp control cancel_consumer queue_name # optional
+celery -A yourapp control add_consumer queue_name -P 1
+If your version doesn’t support dynamic QoS well, keep prefetch=1 in config.
+1. Throttle or pause slow lanes
+celery -A yourapp control rate_limit yourapp.tasks.slow_task 10/m
+celery -A yourapp control cancel_consumer slow_queue
+# later:
+celery -A yourapp control add_consumer slow_queue
+1. Purge only when safe
+If tasks are idempotent and truly disposable:
+celery -A yourapp purge
+Remember: purging does not touch reserved—that’s why queues looked empty
+for you.
+C. Broker-side checks (no restarts)
+Inspect Redis for unacked lists per queue:
+Keys like unacked, unacked_index, unacked_mutex under Celery’s
+namespace.
+If these lists are huge while workers show no progress, you’ve confirmed
+reservation pile-up.
+Celery solution 4
+If visibility is very high, temporarily lower it (then restore) to accelerate
+requeue of lost reservations during incident (use with caution).
+Monitoring & alarms to catch this early
+Lag metrics per queue:
+Broker queue length
+Reserved count per worker (via events/Flower)
+active vs reserved ratio alarm (e.g., reserved > 3× concurrency for 5
+minutes)
+Worker health:
+Heartbeat missed alarms
+Pool stuck detector: no change in tasks started/completed for X
+minutes while received increases
+Outcome SLOs:
+Start latency (enqueue→start)
+Run latency (start→finish)
+Alert if start latency spikes while queue length is low (classic prefetch
+hoarding signal).
+Concrete config template (drop-in
+starting point)
+# celeryconfig.py
+broker_url = "redis://<enterprise-redis>:6379/0"
+result_backend = "redis://<enterprise-redis>:6379/1"
+worker_pool = "prefork"
+worker_concurrency = 17
+Celery solution 5
+worker_prefetch_multiplier = 1
+task_soft_time_limit = 150
+task_time_limit = 180
+task_acks_on_failure_or_timeout = True
+task_reject_on_worker_lost = True
+acks_late = True # only if tasks are idempotent
+broker_transport_options = {
+"visibility_timeout": 240,
+"fanout_patterns": True,
+"fanout_prefix": True,
+}
+broker_pool_limit = 10
+broker_heartbeat = 30
+broker_connection_timeout = 30
+redis_socket_timeout = 30
+worker_max_tasks_per_child = 100
+worker_max_memory_per_child = 400_000
+Run workers:
+celery -A yourapp worker -n worker@%h --pool=prefork --concurrency=17 -l
+INFO
+For queues:
+celery -A yourapp worker -Q fast --concurrency=16 ...
+celery -A yourapp worker -Q slow --concurrency=4 ...
+Quick answers to your specific
+confusions
+“Tasks count became zero but nothing ran”
+The zero you saw was the broker queue. Tasks were stuck in the workers’
+reserved state (prefetch). Inspect reserved to see them.
+Celery solution 6
+“Locked state?”
+In Celery/Redis this usually manifests as reserved/unacked rather than a
+true lock. With thread pools, hung threads look like “locked.”
+“New tasks got received and then nothing”
+That’s the pool being fully occupied (stuck threads) + prefetch=4 starving
+newcomers.
+“Why did restart fix it?”
+Restart cleared the wedged thread pool and the giant reserved set; fresh
+child processes/threads started clean and work flowed.
+TL;DR action plan
+1. Move to prefork, set prefetch=1, and align hard time limit (180s) with Redis
+visibility (≈240s).
+2. Separate slow vs fast tasks into queues; cap concurrency for the slow lane.
+3. Enable acks & recycle children (worker_max_tasks_per_child).
+4. During incidents, use inspect, revoke --terminate, and control pool_restart
+—no pod restarts needed.
+5. Alert on reserved/active skew and start-latency spikes.
+If you want, paste your current Celery config (sanitized) and the exact worker
+command you run in OCP, and I’ll rewrite it to the hardened profile above.
+Celery solution 7
